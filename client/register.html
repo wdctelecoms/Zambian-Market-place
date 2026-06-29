@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register — Zambian Marketplace</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Register</h1>
+          <p class="page-description">Create an account to start buying, selling, or pre-ordering.</p>
+        </div>
+        <nav class="header-nav">
+          <a href="index.html">Home</a>
+          <a href="shop.html">Shop</a>
+        </nav>
+      </header>
+
+      <section class="card" style="max-width: 620px; margin: 0 auto;">
+        <form class="grid grid-2">
+          <div class="input-group">
+            <label for="full-name">Full name</label>
+            <input id="full-name" type="text" placeholder="Your name" />
+          </div>
+          <div class="input-group">
+            <label for="email">Email address</label>
+            <input id="email" type="email" placeholder="you@example.com" />
+          </div>
+          <div class="input-group">
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="Choose a password" />
+          </div>
+          <div class="input-group">
+            <label for="role">Account type</label>
+            <select id="role">
+              <option value="CUSTOMER">Customer</option>
+              <option value="SELLER">Seller</option>
+            </select>
+          </div>
+          <div class="input-group" style="grid-column: span 2;">
+            <label for="phone">Phone number</label>
+            <input id="phone" type="tel" placeholder="+260 97 123 4567" />
+          </div>
+          <button type="submit">Create account</button>
+        </form>
+      </section>
+
+      <footer class="footer-note">
+        Register as a customer or seller and start using the marketplace today.
+      </footer>
+    </div>
+  </body>
+</html>

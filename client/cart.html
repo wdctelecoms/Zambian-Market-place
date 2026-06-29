@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shopping Cart — Zambian Marketplace</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Shopping Cart</h1>
+          <p class="page-description">Review items, update quantities, and proceed to checkout.</p>
+        </div>
+        <nav class="header-nav">
+          <a href="index.html">Home</a>
+          <a href="shop.html">Shop</a>
+          <a href="seller.html">Seller Dashboard</a>
+          <a href="chat.html">Chat</a>
+        </nav>
+      </header>
+
+      <section class="card">
+        <div class="grid grid-3">
+          <div class="card">
+            <h3>Cart total</h3>
+            <p class="product-card-price">ZMW 212.00</p>
+          </div>
+          <div class="card">
+            <h3>Delivery fee</h3>
+            <p class="text-muted">ZMW 15.00</p>
+          </div>
+          <div class="card">
+            <h3>Grand total</h3>
+            <p class="product-card-price">ZMW 227.00</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top: 1.5rem;">
+        <h2>Your items</h2>
+        <div class="grid" style="margin-top: 1rem;">
+          <article class="card">
+            <h3>Fresh maize</h3>
+            <p class="text-muted">Quantity: 2</p>
+            <p class="product-card-price">ZMW 90.00</p>
+            <button class="button-secondary">Remove</button>
+          </article>
+          <article class="card">
+            <h3>Morning eggs</h3>
+            <p class="text-muted">Quantity: 1</p>
+            <p class="product-card-price">ZMW 50.00</p>
+            <button class="button-secondary">Remove</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top: 1.5rem;">
+        <h2>Pickup details</h2>
+        <div class="grid grid-2">
+          <div class="input-group">
+            <label for="pickup-date">Pickup date</label>
+            <input id="pickup-date" type="date" />
+          </div>
+          <div class="input-group">
+            <label for="pickup-time">Pickup time</label>
+            <input id="pickup-time" type="time" />
+          </div>
+        </div>
+        <button style="margin-top: 1rem;">Proceed to checkout</button>
+      </section>
+
+      <footer class="footer-note">
+        Adjust quantities and pickup details before placing your order.
+      </footer>
+    </div>
+  </body>
+</html>

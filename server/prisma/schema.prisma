@@ -34,14 +34,32 @@ enum PaymentMethod {
   BANK_TRANSFER
 }
 
+enum MessageType {
+  TEXT
+  IMAGE
+  VOICE
+  ORDER
+  PRODUCT
+}
+
+enum PreOrderStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
 model User {
-  id        String   @id @default(uuid())
-  fullName  String
-  email     String   @unique
-  password  String
-  role      Role     @default(CUSTOMER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(uuid())
+  fullName      String
+  email         String   @unique
+  password      String
+  role          Role     @default(CUSTOMER)
+  emailVerified Boolean  @default(false)
+  otp           String?
+  refreshToken  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   seller           Seller?
   customer         Customer?
@@ -60,8 +78,9 @@ model Seller {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products Product[]
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products  Product[]
+  preOrders PreOrder[]
 }
 
 model Customer {
@@ -72,12 +91,38 @@ model Customer {
   updatedAt DateTime @updatedAt
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cart      Cart?
   orders    Order[]
   favorites Favorite[]
   reviews   Review[]
   addresses Address[]
   payments  Payment[]
   receipts  Receipt[]
+  preOrders PreOrder[]
+}
+
+model Cart {
+  id         String     @id @default(uuid())
+  customerId String     @unique
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  items      CartItem[]
+}
+
+model CartItem {
+  id           String   @id @default(uuid())
+  cartId       String
+  productId    String
+  quantity     Int      @default(1)
+  savedForLater Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([cartId, productId])
 }
 
 model Category {
@@ -97,7 +142,9 @@ model Product {
   description String
   price       Float
   stock       Int      @default(0)
+  isAvailable Boolean  @default(true)
   imageUrl    String?
+  images      String[]
   sellerId    String
   categoryId  String
   createdAt   DateTime @default(now())
@@ -108,6 +155,8 @@ model Product {
   orderItems OrderItem[]
   reviews    Review[]
   favorites  Favorite[]
+  cartItems  CartItem[]
+  preOrders  PreOrder[]
 }
 
 model Order {
@@ -150,12 +199,18 @@ model Receipt {
 }
 
 model Message {
-  id         String   @id @default(uuid())
-  senderId   String
-  receiverId String
-  content    String
-  isRead     Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  id            String      @id @default(uuid())
+  senderId      String
+  receiverId    String
+  type          MessageType @default(TEXT)
+  content       String?
+  mediaUrl      String?
+  mediaMimeType String?
+  orderId       String?
+  productId     String?
+  isRead        Boolean     @default(false)
+  readAt        DateTime?
+  createdAt     DateTime    @default(now())
 
   sender   User @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
   receiver User @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
@@ -193,6 +248,8 @@ model Favorite {
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, productId])
 }
 
 model Address {
@@ -224,4 +281,22 @@ model Payment {
 
   order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model PreOrder {
+  id         String          @id @default(uuid())
+  customerId String
+  sellerId   String
+  productId  String
+  quantity   Int             @default(1)
+  pickupDate DateTime
+  pickupTime String
+  notes      String?
+  status     PreOrderStatus  @default(PENDING)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  seller   Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
 }

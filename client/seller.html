@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seller Dashboard — Zambian Marketplace</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Seller Dashboard</h1>
+          <p class="page-description">Manage products, view orders, and connect with customers in one place.</p>
+        </div>
+        <nav class="header-nav">
+          <a href="index.html">Home</a>
+          <a href="shop.html">Shop</a>
+          <a href="cart.html">Cart</a>
+          <a href="chat.html">Chat</a>
+        </nav>
+      </header>
+
+      <section class="grid grid-2">
+        <article class="card">
+          <h2>Active products</h2>
+          <p class="text-muted">Your listings are live and ready for customers to browse.</p>
+          <div class="grid" style="margin-top: 1rem;">
+            <div class="card">
+              <h3>500+ orders</h3>
+              <p class="text-muted">Orders fulfilled this month.</p>
+            </div>
+            <div class="card">
+              <h3>42 active products</h3>
+              <p class="text-muted">Products currently listed in your store.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Order summary</h2>
+          <p class="text-muted">Track pre-orders, confirm pickup times, and manage customer requests.</p>
+          <div style="display: grid; gap: 0.85rem; margin-top: 1rem;">
+            <div class="badge">Today: 12 new orders</div>
+            <div class="badge">Pending pre-orders: 5</div>
+            <div class="badge">Unread chat: 8</div>
+          </div>
+        </article>
+      </section>
+
+      <section class="card" style="margin-top: 1.5rem;">
+        <h2>Add a new product</h2>
+        <form class="grid grid-2">
+          <div class="input-group">
+            <label for="product-name">Product name</label>
+            <input id="product-name" type="text" placeholder="E.g. Groundnuts" />
+          </div>
+          <div class="input-group">
+            <label for="product-price">Price (ZMW)</label>
+            <input id="product-price" type="number" placeholder="00.00" />
+          </div>
+          <div class="input-group">
+            <label for="product-stock">Stock quantity</label>
+            <input id="product-stock" type="number" placeholder="10" />
+          </div>
+          <div class="input-group">
+            <label for="product-image">Image URL</label>
+            <input id="product-image" type="text" placeholder="https://..." />
+          </div>
+          <div class="input-group" style="grid-column: span 2;">
+            <label for="product-description">Description</label>
+            <textarea id="product-description" placeholder="A short description of this product."></textarea>
+          </div>
+          <button type="submit">Create product</button>
+        </form>
+      </section>
+
+      <footer class="footer-note">
+        Your marketplace dashboard for listing products and staying connected with buyers.
+      </footer>
+    </div>
+  </body>
+</html>
