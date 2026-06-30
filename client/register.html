@@ -20,18 +20,18 @@
       </header>
 
       <section class="card" style="max-width: 620px; margin: 0 auto;">
-        <form class="grid grid-2">
+        <form id="register-form" class="grid grid-2">
           <div class="input-group">
             <label for="full-name">Full name</label>
-            <input id="full-name" type="text" placeholder="Your name" />
+            <input id="full-name" type="text" placeholder="Your name" required />
           </div>
           <div class="input-group">
             <label for="email">Email address</label>
-            <input id="email" type="email" placeholder="you@example.com" />
+            <input id="email" type="email" placeholder="you@example.com" required />
           </div>
           <div class="input-group">
             <label for="password">Password</label>
-            <input id="password" type="password" placeholder="Choose a password" />
+            <input id="password" type="password" placeholder="Choose a password" required />
           </div>
           <div class="input-group">
             <label for="role">Account type</label>
@@ -44,6 +44,7 @@
             <label for="phone">Phone number</label>
             <input id="phone" type="tel" placeholder="+260 97 123 4567" />
           </div>
+          <div id="form-status" class="status-message" style="grid-column: span 2;" aria-live="polite"></div>
           <button type="submit">Create account</button>
         </form>
       </section>
@@ -52,5 +53,6 @@
         Register as a customer or seller and start using the marketplace today.
       </footer>
     </div>
+    <script src="app.js"></script>
   </body>
 </html>

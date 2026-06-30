@@ -3,96 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Zambian Marketplace — Home</title>
-    <link rel="stylesheet" href="styles.css" />
+    <meta http-equiv="refresh" content="0; url=/intro.html" />
+    <title>Zambian Marketplace — Landing</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, sans-serif;
+        background: #fffaf5;
+        color: #1f2a2e;
+      }
+      a {
+        color: #ff7a00;
+        text-decoration: none;
+      }
+    </style>
   </head>
   <body>
-    <div id="intro-screen" class="intro-screen" aria-live="polite">
-      <div class="intro-card">
-        <p class="intro-badge">Welcome to</p>
-        <h1>Zambian Marketplace</h1>
-        <p>
-          Discover local products, connect with trusted sellers, and pre-order the essentials you need from across Zambia.
-        </p>
-        <button id="enter-btn">Explore the marketplace</button>
-      </div>
-    </div>
-
-    <div class="container">
-      <header class="page-header">
-        <div>
-          <h1 class="page-title">Zambian Marketplace</h1>
-          <p class="page-description">Buy, sell, and pre-order local products from trusted sellers across Zambia.</p>
-        </div>
-        <nav class="header-nav">
-          <a href="shop.html">Shop</a>
-          <a href="seller.html">Seller Dashboard</a>
-          <a href="cart.html">Cart</a>
-          <a href="chat.html">Chat</a>
-          <a href="login.html">Login</a>
-        </nav>
-      </header>
-
-      <section class="grid grid-3">
-        <article class="card">
-          <h2>Discover products</h2>
-          <p class="text-muted">Browse fresh goods and curated offerings from local businesses and markets.</p>
-        </article>
-
-        <article class="card">
-          <h2>Shop smart</h2>
-          <p class="text-muted">Save favorites, compare prices, and place orders from your dashboard.</p>
-        </article>
-
-        <article class="card">
-          <h2>Chat with sellers</h2>
-          <p class="text-muted">Send messages, share products, and confirm orders in real time.</p>
-        </article>
-      </section>
-
-      <section class="card" style="margin-top: 1.5rem;">
-        <h2>Featured categories</h2>
-        <div class="grid grid-3" style="margin-top: 1rem;">
-          <div class="card">
-            <h3>Fresh produce</h3>
-            <p class="text-muted">Vegetables, fruit, and pantry staples from regional farmers.</p>
-          </div>
-          <div class="card">
-            <h3>Home essentials</h3>
-            <p class="text-muted">Household goods, kitchenware, and supplies from trusted sellers.</p>
-          </div>
-          <div class="card">
-            <h3>Pre-order items</h3>
-            <p class="text-muted">Reserve specialty goods and schedule pickups in advance.</p>
-          </div>
-        </div>
-      </section>
-
-      <footer class="footer-note">
-        Built for Zambian sellers and customers — simple, clean, and mobile friendly.
-      </footer>
-    </div>
-
-    <script>
-      const introScreen = document.getElementById('intro-screen');
-      const enterButton = document.getElementById('enter-btn');
-
-      const hideIntro = () => {
-        introScreen.classList.add('hidden');
-        document.body.classList.remove('intro-open');
-      };
-
-      window.addEventListener('load', () => {
-        document.body.classList.add('intro-open');
-        requestAnimationFrame(() => introScreen.classList.add('visible'));
-      });
-
-      enterButton.addEventListener('click', hideIntro);
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          hideIntro();
-        }
-      });
-    </script>
+    <p>Redirecting to the marketplace landing page...</p>
+    <p>If you are not redirected, <a href="/intro.html">click here</a>.</p>
   </body>
 </html>

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zambian Marketplace — Welcome</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #fffaf5;
+      --bg2:     #fff8ef;
+      --bg3:     #fff2e5;
+      --surface: #ffffff;
+      --border:  rgba(255,122,0,0.16);
+      --border2: rgba(255,122,0,0.28);
+      --accent:  #ff7a00;
+      --accent2: #ff8f2d;
+      --accent-dim: #fff2e5;
+      --accent-glow: rgba(255,122,0,0.1);
+      --teal:    var(--accent);
+      --teal2:   var(--accent2);
+      --teal-dim: var(--accent-dim);
+      --teal-glow: var(--accent-glow);
+      --text:    #1f2a2e;
+      --text2:   #6f7a85;
+      --text3:   #8b95a0;
+      --mono: 'Courier New', Courier, monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: linear-gradient(135deg, #fffaf5 0%, #fff4e8 100%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ---- PATTERN TEXTURE ---- */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.45;
+    }
+
+    * { position: relative; z-index: 1; }
+
+    /* ---- NAV ---- */
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; height: 62px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 34px; height: 34px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center;
+    }
+    .logo-icon svg { width: 18px; height: 18px; fill: var(--bg); }
+    .logo-text { font-size: 15px; font-weight: 700; color: var(--text); }
+    .logo-text span { color: var(--teal); margin-left: 2px; }
+    .nav-links { display: flex; align-items: center; gap: 6px; }
+    .nav-link {
+      font-size: 14px; color: var(--text2); padding: 6px 14px;
+      border-radius: 6px; transition: color 0.15s, background 0.15s; cursor: pointer;
+    }
+    .nav-link:hover { color: var(--teal); background: var(--teal-dim); }
+    .btn-ghost {
+      border: 1px solid var(--border2); border-radius: 8px;
+      padding: 8px 18px; font-size: 13px; font-weight: 500; color: var(--text2);
+      background: transparent; cursor: pointer; transition: all 0.15s; font-family: inherit;
+    }
+    .btn-ghost:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-dim); }
+    .btn-teal {
+      background: var(--teal); color: var(--bg); border: none; border-radius: 8px;
+      padding: 9px 20px; font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: opacity 0.15s; font-family: inherit;
+    }
+    .btn-teal:hover { opacity: 0.85; }
+
+    /* ---- HERO ---- */
+    .hero {
+      text-align: center;
+      padding: 100px 32px 80px;
+      max-width: 860px; margin: 0 auto;
+    }
+    .hero-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 1px solid var(--border2); border-radius: 20px;
+      padding: 6px 18px; margin-bottom: 36px;
+      font-family: var(--mono); font-size: 12px;
+      color: var(--teal); letter-spacing: 0.06em;
+    }
+    .pill-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--teal); display: inline-block;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .hero h1 {
+      font-size: clamp(38px, 7vw, 72px);
+      font-weight: 800; line-height: 1.08;
+      letter-spacing: -0.03em;
+      margin-bottom: 24px;
+    }
+    .hero h1 .white { color: var(--text); display: block; }
+    .hero h1 .accent { color: var(--teal); display: block; }
+    .hero p {
+      font-size: 17px; color: var(--text2); max-width: 500px;
+      margin: 0 auto 44px; line-height: 1.75;
+    }
+    .hero-btns { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .btn-teal-lg {
+      background: var(--teal); color: var(--bg);
+      border: none; border-radius: 10px;
+      padding: 14px 30px; font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: opacity 0.15s; font-family: inherit;
+    }
+    .btn-teal-lg:hover { opacity: 0.85; }
+    .btn-ghost-lg {
+      border: 1px solid var(--border2); border-radius: 10px;
+      padding: 13px 26px; font-size: 15px; font-weight: 500; color: var(--text2);
+      background: transparent; cursor: pointer; transition: all 0.15s; font-family: inherit;
+    }
+    .btn-ghost-lg:hover { border-color: var(--teal); color: var(--teal); }
+
+    /* ---- DIVIDER LINE ---- */
+    .divider {
+      width: 100%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--teal2), transparent);
+      opacity: 0.3;
+    }
+
+    /* ---- STATS ---- */
+    .stats {
+      display: flex; justify-content: center;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+    }
+    .stat {
+      flex: 1; max-width: 240px;
+      padding: 28px 24px; text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .stat:last-child { border-right: none; }
+    .stat-num {
+      font-size: 30px; font-weight: 800; color: var(--teal);
+      letter-spacing: -0.02em; margin-bottom: 4px;
+    }
+    .stat-label { font-size: 13px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.04em; }
+
+    /* ---- SECTION WRAPPER ---- */
+    .section { padding: 80px 40px; max-width: 1040px; margin: 0 auto; }
+    .section-eyebrow {
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+      color: var(--teal); text-transform: uppercase; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-eyebrow::before {
+      content: ''; width: 24px; height: 1px; background: var(--teal);
+    }
+    .section-title {
+      font-size: clamp(24px, 4vw, 36px); font-weight: 800;
+      color: var(--text); letter-spacing: -0.02em; margin-bottom: 12px;
+    }
+    .section-sub { font-size: 15px; color: var(--text2); max-width: 480px; line-height: 1.7; margin-bottom: 48px; }
+
+    /* ---- FEATURES ---- */
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1px; background: var(--border); }
+    .feature-card {
+      background: var(--bg2); padding: 32px 28px;
+      transition: background 0.2s;
+    }
+    .feature-card:hover { background: var(--bg3); }
+    .feature-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: var(--teal-dim); border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; margin-bottom: 18px;
+    }
+    .feature-card h3 {
+      font-size: 16px; font-weight: 700; color: var(--text);
+      margin-bottom: 8px; letter-spacing: -0.01em;
+    }
+    .feature-card p { font-size: 14px; color: var(--text2); line-height: 1.65; }
+
+    /* ---- HOW IT WORKS ---- */
+    .how-bg {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0; }
+    .step {
+      padding: 32px 24px;
+      border-right: 1px solid var(--border);
+    }
+    .step:last-child { border-right: none; }
+    .step-num {
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      color: var(--teal); letter-spacing: 0.08em; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .step-num::after { content: ''; flex: 1; height: 1px; background: var(--border2); }
+    .step h4 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .step p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+    /* ---- TESTIMONIAL ---- */
+    .testimonial-wrap { max-width: 680px; margin: 0 auto; text-align: center; padding: 80px 32px; }
+    .teal-quote {
+      font-size: 18px; color: var(--text); line-height: 1.7;
+      font-style: italic; margin-bottom: 28px;
+    }
+    .teal-quote::before { content: '\201C'; color: var(--teal); font-size: 36px; line-height: 0; vertical-align: -0.4em; margin-right: 4px; }
+    .teal-quote::after  { content: '\201D'; color: var(--teal); font-size: 36px; line-height: 0; vertical-align: -0.4em; margin-left: 4px; }
+    .author { display: flex; align-items: center; justify-content: center; gap: 14px; }
+    .avatar {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: var(--teal-dim); border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: var(--teal);
+    }
+    .author-name { font-size: 14px; font-weight: 600; color: var(--text); text-align: left; }
+    .author-role { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+
+    /* ---- CTA BANNER ---- */
+    .cta-strip {
+      margin: 0 40px 80px;
+      background: linear-gradient(135deg, #fff8ef, #ffffff);
+      border: 1px solid var(--border2);
+      border-radius: 16px; padding: 52px 48px;
+      display: flex; align-items: center; justify-content: space-between; gap: 32px;
+      flex-wrap: wrap;
+      overflow: hidden;
+    }
+    .cta-strip::before {
+      content: '';
+      position: absolute; right: -60px; top: -60px;
+      width: 220px; height: 220px; border-radius: 50%;
+      background: radial-gradient(circle, var(--accent-dim) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-strip h2 {
+      font-size: 26px; font-weight: 800; color: var(--text);
+      letter-spacing: -0.02em; margin-bottom: 6px;
+    }
+    .cta-strip p { font-size: 14px; color: var(--text2); }
+
+    /* ---- FOOTER ---- */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 22px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; color: var(--text3); flex-wrap: wrap; gap: 12px;
+      font-family: var(--mono);
+    }
+    footer nav { display: flex; gap: 24px; }
+    footer a { color: var(--text3); text-decoration: none; }
+    footer a:hover { color: var(--teal); }
+
+    @media (max-width: 640px) {
+      .nav { padding: 0 20px; }
+      .nav-link { display: none; }
+      .hero { padding: 64px 20px 56px; }
+      .section { padding: 56px 20px; }
+      .cta-strip { margin: 0 20px 56px; padding: 36px 28px; }
+      footer { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="#0b0f0e" stroke-width="2"/></svg>
+      </div>
+      <span class="logo-text">Zambian<span>Marketplace</span></span>
+    </div>
+    <div class="nav-links">
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#how" class="nav-link">How it works</a>
+      <a href="shop.html" class="nav-link">Shop</a>
+      <a href="cart.html" class="nav-link">Cart</a>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-ghost" onclick="location.href='login.html'">Log in</button>
+      <button class="btn-teal" onclick="location.href='register.html'">Create account</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-pill">
+      <span class="pill-dot"></span>
+      Local Commerce Platform
+    </div>
+    <h1>
+      <span class="white">Buy local.</span>
+      <span class="accent">Support Zambia.</span>
+    </h1>
+    <p>Discover local products, talk directly with sellers, reserve items with pre-orders, and manage every step of your shopping journey from one simple marketplace built for Zambia.</p>
+    <div class="hero-btns">
+      <button class="btn-teal-lg" onclick="location.href='shop.html'">Browse marketplace →</button>
+      <button class="btn-ghost-lg" onclick="location.href='#how'">See how it works</button>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">2,400+</div>
+      <div class="stat-label">// active sellers</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">18</div>
+      <div class="stat-label">// cities covered</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">12K+</div>
+      <div class="stat-label">// products listed</div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div id="features" class="section">
+    <div class="section-eyebrow">Platform features</div>
+    <div class="section-title">Everything you need to trade local</div>
+    <div class="section-sub">From discovery to delivery — Zambian Marketplace handles it all in one place.</div>
+
+    <div class="features-grid" style="border:1px solid var(--border);border-radius:12px;overflow:hidden">
+      <div class="feature-card">
+        <div class="feature-icon"></div>
+        <h3>Discover local products</h3>
+        <p>Browse fresh produce, household essentials, and handmade goods from trusted sellers across Zambia.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"></div>
+        <h3>Direct seller chat</h3>
+        <p>Chat directly with sellers before you buy, ask about stock, pricing, or pickup details, and build trust quickly.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"></div>
+        <h3>Pre-order and reserve</h3>
+        <p>Reserve specialty items in advance, choose pickup times, and make sure your order is ready when you arrive.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"></div>
+        <h3>Smart cart and orders</h3>
+        <p>Save favourites, add items to your cart, and keep track of your orders in one clean customer dashboard.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"></div>
+        <h3>Seller dashboard</h3>
+        <p>Sell with confidence by creating listings, managing inventory, and responding to buyers from a simple seller dashboard.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"></div>
+        <h3>Mobile first</h3>
+        <p>Use the marketplace smoothly on mobile or desktop so buying and selling stays easy wherever you are in Zambia.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div id="how" class="how-bg">
+    <div class="section">
+      <div class="section-eyebrow">Process</div>
+      <div class="section-title">Shop in four steps</div>
+      <div class="steps" style="border:1px solid var(--border);border-radius:12px;overflow:hidden">
+        <div class="step">
+          <div class="step-num">STEP 01</div>
+          <h4>Browse products</h4>
+          <p>Search by category, location, or seller name to find exactly what you need.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">STEP 02</div>
+          <h4>Chat with seller</h4>
+          <p>Confirm availability, ask questions, and agree on delivery or pickup.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">STEP 03</div>
+          <h4>Place your order</h4>
+          <p>Add to cart and check out. Pre-orders can be reserved well in advance.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">STEP 04</div>
+          <h4>Receive your goods</h4>
+          <p>Pick up locally or arrange delivery directly with your seller.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TESTIMONIAL -->
+  <div class="testimonial-wrap">
+    <p class="teal-quote">I've been able to reach customers across Lusaka I never could before. Orders come in every single day now.</p>
+    <div class="author">
+      <div class="avatar">CM</div>
+      <div>
+        <div class="author-name">Chanda Mutale</div>
+        <div class="author-role">// Vegetable farmer, Lusaka</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA STRIP -->
+  <div class="cta-strip">
+    <div>
+      <h2>Ready to start trading?</h2>
+      <p>Join thousands of Zambians buying and selling local every day.</p>
+    </div>
+    <button class="btn-teal-lg" onclick="location.href='shop.html'">Explore the marketplace →</button>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <span>© 2025 Zambian Marketplace</span>
+    <nav>
+      <a href="#">About</a>
+      <a href="#">Help</a>
+      <a href="seller.html">Sell with us</a>
+      <a href="login.html">Log in</a>
+    </nav>
+  </footer>
+
+</body>
+</html>

@@ -18,49 +18,30 @@
           <a href="seller.html">Seller Dashboard</a>
           <a href="cart.html">Cart</a>
           <a href="chat.html">Chat</a>
+          <a href="login.html" data-action="logout">Logout</a>
         </nav>
       </header>
 
-      <section class="grid grid-3">
-        <article class="product-card">
-          <img class="product-image" src="https://images.unsplash.com/photo-1511988617509-a57c8a288659?auto=format&fit=crop&w=800&q=80" alt="Organic vegetables" />
-          <div class="product-card-content">
-            <h3 class="product-card-title">Organic vegetables</h3>
-            <p class="text-muted">Fresh seasonal produce from local farmers.</p>
-            <p class="product-card-price">ZMW 45.00</p>
+      <section class="card" style="margin-bottom: 1.5rem;">
+        <h2>Search the marketplace</h2>
+        <form id="shop-search-form" class="grid grid-2">
+          <div class="input-group">
+            <label for="search">Search products, shops, or categories</label>
+            <input id="search" type="search" placeholder="Search for maize, soap, bakeries..." />
           </div>
-        </article>
-
-        <article class="product-card">
-          <img class="product-image" src="https://images.unsplash.com/photo-1515395657771-3040271e7f32?auto=format&fit=crop&w=800&q=80" alt="Handmade crafts" />
-          <div class="product-card-content">
-            <h3 class="product-card-title">Handmade crafts</h3>
-            <p class="text-muted">Unique artisan goods made with care.</p>
-            <p class="product-card-price">ZMW 120.00</p>
+          <div class="input-group" style="align-self: end;">
+            <button type="submit">Search</button>
           </div>
-        </article>
-
-        <article class="product-card">
-          <img class="product-image" src="https://images.unsplash.com/photo-1437750769460-1f102b7d8a4c?auto=format&fit=crop&w=800&q=80" alt="Order ready meals" />
-          <div class="product-card-content">
-            <h3 class="product-card-title">Pre-order ready meals</h3>
-            <p class="text-muted">Reserve a freshly prepared meal with pickup or delivery.</p>
-            <p class="product-card-price">ZMW 65.00</p>
-          </div>
-        </article>
+        </form>
+        <div id="shop-status" class="status-message" aria-live="polite"></div>
       </section>
 
-      <section class="card" style="margin-top: 1.5rem;">
-        <h2>Search</h2>
-        <div class="input-group">
-          <label for="search">Search products, shops, or categories</label>
-          <input id="search" type="search" placeholder="Search for maize, soap, bakeries..." />
-        </div>
-      </section>
+      <section id="products-grid" class="grid grid-3"></section>
 
       <footer class="footer-note">
         Keep shopping locally and support Zambian sellers.
       </footer>
     </div>
+    <script src="app.js"></script>
   </body>
 </html>

@@ -18,50 +18,23 @@
           <a href="shop.html">Shop</a>
           <a href="seller.html">Seller Dashboard</a>
           <a href="cart.html">Cart</a>
+          <a href="login.html" data-action="logout">Logout</a>
         </nav>
       </header>
 
       <section class="chat-layout">
         <aside class="chat-list card">
           <h2>Conversations</h2>
-          <div class="chat-message received">
-            <div class="chat-meta">
-              <strong>Seller A</strong>
-              <span>2m ago</span>
-            </div>
-            <p>Can you confirm pickup time?</p>
-          </div>
-          <div class="chat-message sent">
-            <div class="chat-meta">
-              <strong>You</strong>
-              <span>5m ago</span>
-            </div>
-            <p>Yes, I will collect at 10am.</p>
-          </div>
+          <div id="conversation-list"></div>
         </aside>
 
         <section class="chat-panel">
-          <div class="chat-thread">
-            <div class="chat-message received">
-              <div class="chat-meta">
-                <span>Seller B</span>
-                <span class="status-pill">Seen</span>
-              </div>
-              <p>Hi, your order is ready for pickup.</p>
-            </div>
-            <div class="chat-message sent">
-              <div class="chat-meta">
-                <span>You</span>
-                <span class="status-pill">Delivered</span>
-              </div>
-              <p>Great, thank you!</p>
-            </div>
-          </div>
-
-          <div class="chat-input-row">
-            <input type="text" placeholder="Type a message..." />
-            <button>Send</button>
-          </div>
+          <div id="chat-thread" class="chat-thread"></div>
+          <div id="chat-status" class="status-message" aria-live="polite"></div>
+          <form id="chat-form" class="chat-input-row">
+            <input id="chat-message" type="text" placeholder="Type a message..." required />
+            <button type="submit">Send</button>
+          </form>
         </section>
       </section>
 
@@ -69,5 +42,6 @@
         Use the chat to ask about products, attach orders, and share item details instantly.
       </footer>
     </div>
+    <script src="app.js"></script>
   </body>
 </html>
