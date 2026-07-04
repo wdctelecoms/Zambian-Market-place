@@ -3,42 +3,62 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Zambian Marketplace — Welcome</title>
+  <meta name="description" content="Zambian Marketplace — buy and sell local products across Zambia. Chat with sellers, reserve items, and shop with confidence."/>
+  <link rel="icon" href="assets/logo.png" type="image/png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <title>Zambian Marketplace — Buy local. Support Zambia.</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:      #fffaf5;
-      --bg2:     #fff8ef;
-      --bg3:     #fff2e5;
+      /* Palette derived from the logo: cart green, bird orange, wordmark black — deepened for a premium feel */
+      --bg:      #f6faf7;
+      --bg2:     #eff7f0;
+      --bg3:     #e6f1e8;
       --surface: #ffffff;
-      --border:  rgba(255,122,0,0.16);
-      --border2: rgba(255,122,0,0.28);
-      --accent:  #ff7a00;
-      --accent2: #ff8f2d;
-      --accent-dim: #fff2e5;
-      --accent-glow: rgba(255,122,0,0.1);
+      --border:  rgba(15,90,48,0.13);
+      --border2: rgba(15,90,48,0.24);
+      --accent:  #0f7a3d;   /* deep logo green */
+      --accent2: #1ea355;   /* lighter green */
+      --accent-dim: #e3f3e7;
+      --accent-ink: #0a5c2d;
       --teal:    var(--accent);
       --teal2:   var(--accent2);
       --teal-dim: var(--accent-dim);
-      --teal-glow: var(--accent-glow);
-      --text:    #1f2a2e;
-      --text2:   #6f7a85;
-      --text3:   #8b95a0;
-      --mono: 'Courier New', Courier, monospace;
+      --orange:  #e08a1a;   /* muted logo orange */
+      --orange2: #f4a53a;
+      --orange-dim: #fbeed9;
+      --ink:     #0b1710;
+      --text:    #16241a;
+      --text2:   #5a6b5f;
+      --text3:   #8a978d;
+      --mono: 'JetBrains Mono', 'Courier New', monospace;
+      --display: 'Manrope', -apple-system, sans-serif;
+      --body: 'Inter', -apple-system, sans-serif;
+      --shadow-sm: 0 1px 2px rgba(11,23,16,0.06), 0 1px 1px rgba(11,23,16,0.04);
+      --shadow-md: 0 6px 16px -4px rgba(15,90,48,0.14), 0 2px 6px -2px rgba(15,90,48,0.08);
+      --shadow-lg: 0 20px 40px -12px rgba(15,90,48,0.22), 0 8px 16px -8px rgba(15,90,48,0.1);
+      --shadow-nav: 0 4px 20px -4px rgba(15,90,48,0.12);
     }
 
     html { scroll-behavior: smooth; }
 
-    body {
-      background: linear-gradient(135deg, #fffaf5 0%, #fff4e8 100%);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      line-height: 1.6;
-      overflow-x: hidden;
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
     }
 
-    /* ---- PATTERN TEXTURE ---- */
+    body {
+      background: linear-gradient(160deg, #f6faf7 0%, #eef7ef 55%, #eaf5ec 100%);
+      color: var(--text);
+      font-family: var(--body);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
     body::before {
       content: '';
       position: fixed; inset: 0; z-index: 0; pointer-events: none;
@@ -46,251 +66,311 @@
         linear-gradient(var(--border) 1px, transparent 1px),
         linear-gradient(90deg, var(--border) 1px, transparent 1px);
       background-size: 60px 60px;
-      opacity: 0.45;
+      opacity: 0.4;
+      mask-image: linear-gradient(180deg, black 0%, black 60%, transparent 100%);
     }
 
     * { position: relative; z-index: 1; }
 
+    a { text-decoration: none; }
+
+    :focus-visible {
+      outline: 2px solid var(--accent2);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
     /* ---- NAV ---- */
     .nav {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 40px; height: 62px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(255,255,255,0.96);
-      backdrop-filter: blur(12px);
+      padding: 0 40px; height: 68px;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       position: sticky; top: 0; z-index: 100;
+      border-bottom: 1px solid transparent;
+      box-shadow: none;
+      transition: box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+    }
+    .nav.is-scrolled {
+      box-shadow: var(--shadow-nav);
+      border-bottom-color: var(--border);
+      background: rgba(255,255,255,0.97);
     }
     .logo { display: flex; align-items: center; gap: 10px; }
     .logo-icon {
-      width: 34px; height: 34px; border-radius: 9px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center;
+      width: 42px; height: 42px;
+      border-radius: 8px;
+      display: block;
+      object-fit: contain;
+      background: transparent;
     }
-    .logo-icon svg { width: 18px; height: 18px; fill: var(--bg); }
-    .logo-text { font-size: 15px; font-weight: 700; color: var(--text); }
+    .logo-text { font-family: var(--display); font-size: 15px; font-weight: 800; color: var(--ink); letter-spacing: -0.01em; }
     .logo-text span { color: var(--teal); margin-left: 2px; }
-    .nav-links { display: flex; align-items: center; gap: 6px; }
+    .nav-links { display: flex; align-items: center; gap: 4px; }
     .nav-link {
-      font-size: 14px; color: var(--text2); padding: 6px 14px;
-      border-radius: 6px; transition: color 0.15s, background 0.15s; cursor: pointer;
+      font-size: 14px; font-weight: 500; color: var(--text2); padding: 8px 15px;
+      border-radius: 7px; transition: color 0.15s, background 0.15s; cursor: pointer;
     }
-    .nav-link:hover { color: var(--teal); background: var(--teal-dim); }
+    .nav-link:hover { color: var(--accent-ink); background: var(--teal-dim); }
     .btn-ghost {
       border: 1px solid var(--border2); border-radius: 8px;
-      padding: 8px 18px; font-size: 13px; font-weight: 500; color: var(--text2);
-      background: transparent; cursor: pointer; transition: all 0.15s; font-family: inherit;
+      padding: 9px 18px; font-size: 13px; font-weight: 600; color: var(--text2);
+      background: var(--surface); cursor: pointer; transition: all 0.15s; font-family: var(--body);
     }
-    .btn-ghost:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-dim); }
+    .btn-ghost:hover { border-color: var(--teal); color: var(--accent-ink); box-shadow: var(--shadow-sm); }
     .btn-teal {
-      background: var(--teal); color: var(--bg); border: none; border-radius: 8px;
-      padding: 9px 20px; font-size: 13px; font-weight: 700;
-      cursor: pointer; transition: opacity 0.15s; font-family: inherit;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #ffffff; border: none; border-radius: 8px;
+      padding: 10px 20px; font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; font-family: var(--body);
+      box-shadow: var(--shadow-sm);
     }
-    .btn-teal:hover { opacity: 0.85; }
+    .btn-teal:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
 
     /* ---- HERO ---- */
     .hero {
       text-align: center;
-      padding: 100px 32px 80px;
+      padding: 108px 32px 64px;
       max-width: 860px; margin: 0 auto;
     }
     .hero-pill {
       display: inline-flex; align-items: center; gap: 8px;
       border: 1px solid var(--border2); border-radius: 20px;
-      padding: 6px 18px; margin-bottom: 36px;
-      font-family: var(--mono); font-size: 12px;
-      color: var(--teal); letter-spacing: 0.06em;
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+      padding: 7px 18px 7px 14px; margin-bottom: 36px;
+      font-family: var(--mono); font-size: 12px; font-weight: 500;
+      color: var(--accent-ink); letter-spacing: 0.04em;
     }
     .pill-dot {
       width: 7px; height: 7px; border-radius: 50%;
-      background: var(--teal); display: inline-block;
+      background: var(--orange); display: inline-block;
       animation: pulse 2s infinite;
+      box-shadow: 0 0 0 3px var(--orange-dim);
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
     .hero h1 {
-      font-size: clamp(38px, 7vw, 72px);
+      font-family: var(--display);
+      font-size: clamp(38px, 7vw, 68px);
       font-weight: 800; line-height: 1.08;
       letter-spacing: -0.03em;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
     }
-    .hero h1 .white { color: var(--text); display: block; }
-    .hero h1 .accent { color: var(--teal); display: block; }
+    .hero h1 .white { color: var(--ink); display: block; }
+    .hero h1 .accent {
+      display: block;
+      background: linear-gradient(100deg, var(--accent) 10%, var(--accent2) 60%, var(--orange) 130%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
     .hero p {
       font-size: 17px; color: var(--text2); max-width: 500px;
-      margin: 0 auto 44px; line-height: 1.75;
+      margin: 0 auto 40px; line-height: 1.75;
     }
-    .hero-btns { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .hero-btns { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 44px; }
     .btn-teal-lg {
-      background: var(--teal); color: var(--bg);
+      background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #ffffff;
       border: none; border-radius: 10px;
-      padding: 14px 30px; font-size: 15px; font-weight: 700;
-      cursor: pointer; transition: opacity 0.15s; font-family: inherit;
+      padding: 15px 30px; font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; font-family: var(--body);
+      box-shadow: var(--shadow-md);
     }
-    .btn-teal-lg:hover { opacity: 0.85; }
+    .btn-teal-lg:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
     .btn-ghost-lg {
       border: 1px solid var(--border2); border-radius: 10px;
-      padding: 13px 26px; font-size: 15px; font-weight: 500; color: var(--text2);
-      background: transparent; cursor: pointer; transition: all 0.15s; font-family: inherit;
+      padding: 14px 26px; font-size: 15px; font-weight: 600; color: var(--text2);
+      background: var(--surface); cursor: pointer; transition: all 0.15s; font-family: var(--body);
     }
-    .btn-ghost-lg:hover { border-color: var(--teal); color: var(--teal); }
+    .btn-ghost-lg:hover { border-color: var(--teal); color: var(--accent-ink); box-shadow: var(--shadow-sm); }
 
-    /* ---- DIVIDER LINE ---- */
-    .divider {
-      width: 100%; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--teal2), transparent);
-      opacity: 0.3;
+    /* ---- TRUST BAR ---- */
+    .trust-bar {
+      display: flex; justify-content: center; align-items: center; flex-wrap: wrap;
+      gap: 28px; padding: 0 20px;
+      font-family: var(--mono); font-size: 12px; color: var(--text3);
+      letter-spacing: 0.02em;
     }
+    .trust-item { display: flex; align-items: center; gap: 7px; }
+    .trust-item svg { width: 15px; height: 15px; stroke: var(--accent); fill: none; stroke-width: 2; flex-shrink: 0; }
 
     /* ---- STATS ---- */
     .stats {
       display: flex; justify-content: center;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      background: var(--bg2);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+      border-radius: 16px;
+      max-width: 900px; margin: 64px auto 0;
+      border: 1px solid var(--border);
     }
     .stat {
-      flex: 1; max-width: 240px;
-      padding: 28px 24px; text-align: center;
+      flex: 1; padding: 30px 24px; text-align: center;
       border-right: 1px solid var(--border);
     }
     .stat:last-child { border-right: none; }
     .stat-num {
-      font-size: 30px; font-weight: 800; color: var(--teal);
+      font-family: var(--display);
+      font-size: 30px; font-weight: 800; color: var(--accent-ink);
       letter-spacing: -0.02em; margin-bottom: 4px;
     }
-    .stat-label { font-size: 13px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.04em; }
+    .stat-label { font-size: 12px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.03em; }
 
     /* ---- SECTION WRAPPER ---- */
-    .section { padding: 80px 40px; max-width: 1040px; margin: 0 auto; }
+    .section { padding: 96px 40px; max-width: 1040px; margin: 0 auto; }
     .section-eyebrow {
-      font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
-      color: var(--teal); text-transform: uppercase; margin-bottom: 10px;
+      font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+      color: var(--orange); text-transform: uppercase; margin-bottom: 12px;
       display: flex; align-items: center; gap: 8px;
     }
-    .section-eyebrow::before {
-      content: ''; width: 24px; height: 1px; background: var(--teal);
-    }
+    .section-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--orange); }
     .section-title {
+      font-family: var(--display);
       font-size: clamp(24px, 4vw, 36px); font-weight: 800;
-      color: var(--text); letter-spacing: -0.02em; margin-bottom: 12px;
+      color: var(--ink); letter-spacing: -0.02em; margin-bottom: 12px;
     }
-    .section-sub { font-size: 15px; color: var(--text2); max-width: 480px; line-height: 1.7; margin-bottom: 48px; }
+    .section-sub { font-size: 15px; color: var(--text2); max-width: 480px; line-height: 1.7; margin-bottom: 52px; }
 
     /* ---- FEATURES ---- */
-    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1px; background: var(--border); }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
     .feature-card {
-      background: var(--bg2); padding: 32px 28px;
-      transition: background 0.2s;
+      background: var(--surface); padding: 30px 26px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
-    .feature-card:hover { background: var(--bg3); }
+    .feature-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--border2); }
     .feature-icon {
-      width: 44px; height: 44px; border-radius: 10px;
-      background: var(--teal-dim); border: 1px solid var(--border2);
+      width: 42px; height: 42px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--teal-dim), var(--surface));
+      border: 1px solid var(--border2);
       display: flex; align-items: center; justify-content: center;
-      font-size: 20px; margin-bottom: 18px;
+      margin-bottom: 18px;
     }
+    .feature-icon svg { width: 20px; height: 20px; stroke: var(--accent); fill: none; stroke-width: 1.8; }
     .feature-card h3 {
-      font-size: 16px; font-weight: 700; color: var(--text);
+      font-family: var(--display);
+      font-size: 16px; font-weight: 700; color: var(--ink);
       margin-bottom: 8px; letter-spacing: -0.01em;
     }
     .feature-card p { font-size: 14px; color: var(--text2); line-height: 1.65; }
 
     /* ---- HOW IT WORKS ---- */
-    .how-bg {
-      background: var(--bg2);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0; }
+    .how-bg { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; }
     .step {
-      padding: 32px 24px;
-      border-right: 1px solid var(--border);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 24px;
+      box-shadow: var(--shadow-sm);
     }
-    .step:last-child { border-right: none; }
     .step-num {
-      font-family: var(--mono); font-size: 11px; font-weight: 700;
-      color: var(--teal); letter-spacing: 0.08em; margin-bottom: 12px;
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      color: var(--orange); letter-spacing: 0.06em; margin-bottom: 14px;
       display: flex; align-items: center; gap: 6px;
     }
     .step-num::after { content: ''; flex: 1; height: 1px; background: var(--border2); }
-    .step h4 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .step h4 { font-family: var(--display); font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
     .step p { font-size: 13px; color: var(--text2); line-height: 1.6; }
 
     /* ---- TESTIMONIAL ---- */
-    .testimonial-wrap { max-width: 680px; margin: 0 auto; text-align: center; padding: 80px 32px; }
-    .teal-quote {
-      font-size: 18px; color: var(--text); line-height: 1.7;
-      font-style: italic; margin-bottom: 28px;
-    }
-    .teal-quote::before { content: '\201C'; color: var(--teal); font-size: 36px; line-height: 0; vertical-align: -0.4em; margin-right: 4px; }
-    .teal-quote::after  { content: '\201D'; color: var(--teal); font-size: 36px; line-height: 0; vertical-align: -0.4em; margin-left: 4px; }
+    .testimonial-wrap { max-width: 680px; margin: 0 auto; text-align: center; padding: 96px 32px; }
+    .teal-quote { font-size: 19px; color: var(--ink); line-height: 1.7; font-weight: 500; margin-bottom: 28px; }
+    .teal-quote::before { content: '\201C'; color: var(--orange); font-size: 40px; line-height: 0; vertical-align: -0.42em; margin-right: 4px; }
+    .teal-quote::after  { content: '\201D'; color: var(--orange); font-size: 40px; line-height: 0; vertical-align: -0.42em; margin-left: 4px; }
     .author { display: flex; align-items: center; justify-content: center; gap: 14px; }
     .avatar {
-      width: 42px; height: 42px; border-radius: 50%;
-      background: var(--teal-dim); border: 1px solid var(--border2);
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
       display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 700; color: var(--teal);
+      font-family: var(--display); font-size: 13px; font-weight: 700; color: #fff;
+      box-shadow: var(--shadow-sm);
     }
-    .author-name { font-size: 14px; font-weight: 600; color: var(--text); text-align: left; }
+    .author-name { font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--ink); text-align: left; }
     .author-role { font-size: 12px; color: var(--text3); font-family: var(--mono); }
 
     /* ---- CTA BANNER ---- */
     .cta-strip {
-      margin: 0 40px 80px;
-      background: linear-gradient(135deg, #fff8ef, #ffffff);
-      border: 1px solid var(--border2);
-      border-radius: 16px; padding: 52px 48px;
+      margin: 0 40px 96px;
+      background: linear-gradient(135deg, var(--accent-ink), var(--accent2));
+      border-radius: 20px; padding: 56px 48px;
       display: flex; align-items: center; justify-content: space-between; gap: 32px;
       flex-wrap: wrap;
       overflow: hidden;
+      box-shadow: var(--shadow-lg);
     }
     .cta-strip::before {
       content: '';
-      position: absolute; right: -60px; top: -60px;
-      width: 220px; height: 220px; border-radius: 50%;
-      background: radial-gradient(circle, var(--accent-dim) 0%, transparent 70%);
+      position: absolute; right: -40px; top: -60px;
+      width: 240px; height: 240px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(224,138,26,0.35) 0%, transparent 70%);
       pointer-events: none;
     }
-    .cta-strip h2 {
-      font-size: 26px; font-weight: 800; color: var(--text);
-      letter-spacing: -0.02em; margin-bottom: 6px;
-    }
-    .cta-strip p { font-size: 14px; color: var(--text2); }
+    .cta-strip h2 { font-family: var(--display); font-size: 27px; font-weight: 800; color: #fff; letter-spacing: -0.02em; margin-bottom: 6px; }
+    .cta-strip p { font-size: 14px; color: rgba(255,255,255,0.85); }
+    .cta-strip .btn-teal-lg { background: #fff; color: var(--accent-ink); box-shadow: 0 8px 20px rgba(0,0,0,0.18); }
+    .cta-strip .btn-teal-lg:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,0.22); }
 
     /* ---- FOOTER ---- */
     footer {
       border-top: 1px solid var(--border);
-      padding: 22px 40px;
+      background: var(--surface);
+      padding: 56px 40px 28px;
+    }
+    .footer-grid {
+      max-width: 1040px; margin: 0 auto 40px;
+      display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 32px;
+    }
+    .footer-brand .logo { margin-bottom: 14px; }
+    .footer-brand p { font-size: 13px; color: var(--text3); max-width: 240px; line-height: 1.6; }
+    .footer-col h5 {
+      font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+      color: var(--text3); text-transform: uppercase; margin-bottom: 14px;
+    }
+    .footer-col a {
+      display: block; font-size: 14px; color: var(--text2); margin-bottom: 10px;
+      transition: color 0.15s;
+    }
+    .footer-col a:hover { color: var(--accent-ink); }
+    .footer-bottom {
+      max-width: 1040px; margin: 0 auto;
+      border-top: 1px solid var(--border);
+      padding-top: 22px;
       display: flex; align-items: center; justify-content: space-between;
       font-size: 12px; color: var(--text3); flex-wrap: wrap; gap: 12px;
       font-family: var(--mono);
     }
-    footer nav { display: flex; gap: 24px; }
-    footer a { color: var(--text3); text-decoration: none; }
-    footer a:hover { color: var(--teal); }
+    .footer-bottom a { color: var(--text3); }
+    .footer-bottom a:hover { color: var(--accent-ink); }
 
+    /* ---- SCROLL REVEAL ---- */
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.is-visible { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 780px) {
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
     @media (max-width: 640px) {
       .nav { padding: 0 20px; }
       .nav-link { display: none; }
-      .hero { padding: 64px 20px 56px; }
-      .section { padding: 56px 20px; }
-      .cta-strip { margin: 0 20px 56px; padding: 36px 28px; }
-      footer { padding: 20px; }
+      .hero { padding: 64px 20px 48px; }
+      .section { padding: 64px 20px; }
+      .cta-strip { margin: 0 20px 64px; padding: 40px 28px; }
+      .stats { margin: 48px 16px 0; }
+      .stat { padding: 22px 14px; }
+      footer { padding: 44px 20px 24px; }
+      .footer-grid { grid-template-columns: 1fr 1fr; gap: 28px; }
     }
   </style>
 </head>
 <body>
 
   <!-- NAV -->
-  <nav class="nav">
-    <div class="logo">
-      <div class="logo-icon">
-        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="#0b0f0e" stroke-width="2"/></svg>
-      </div>
+  <nav class="nav" id="siteNav">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.png" class="logo-icon" alt="Zambian Marketplace logo" />
       <span class="logo-text">Zambian<span>Marketplace</span></span>
-    </div>
+    </a>
     <div class="nav-links">
       <a href="#features" class="nav-link">Features</a>
       <a href="#how" class="nav-link">How it works</a>
@@ -318,10 +398,28 @@
       <button class="btn-teal-lg" onclick="location.href='shop.html'">Browse marketplace →</button>
       <button class="btn-ghost-lg" onclick="location.href='#how'">See how it works</button>
     </div>
+    <div class="trust-bar">
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z"/></svg>
+        Secure payments
+      </div>
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+        Verified sellers
+      </div>
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24"><rect x="2" y="7" width="14" height="10" rx="1.5"/><path d="M16 10h3l3 3v4h-6"/><circle cx="6.5" cy="19" r="1.5"/><circle cx="17.5" cy="19" r="1.5"/></svg>
+        Local delivery
+      </div>
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24"><path d="M3 12h4l2 5 4-14 2 9h6"/></svg>
+        24/7 support
+      </div>
+    </div>
   </section>
 
   <!-- STATS -->
-  <div class="stats">
+  <div class="stats reveal">
     <div class="stat">
       <div class="stat-num">2,400+</div>
       <div class="stat-label">// active sellers</div>
@@ -338,38 +436,38 @@
 
   <!-- FEATURES -->
   <div id="features" class="section">
-    <div class="section-eyebrow">Platform features</div>
-    <div class="section-title">Everything you need to trade local</div>
-    <div class="section-sub">From discovery to delivery — Zambian Marketplace handles it all in one place.</div>
+    <div class="section-eyebrow reveal">Platform features</div>
+    <div class="section-title reveal">Everything you need to trade local</div>
+    <div class="section-sub reveal">From discovery to delivery — Zambian Marketplace handles it all in one place.</div>
 
-    <div class="features-grid" style="border:1px solid var(--border);border-radius:12px;overflow:hidden">
-      <div class="feature-card">
-        <div class="feature-icon"></div>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
         <h3>Discover local products</h3>
         <p>Browse fresh produce, household essentials, and handmade goods from trusted sellers across Zambia.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon"></div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
         <h3>Direct seller chat</h3>
         <p>Chat directly with sellers before you buy, ask about stock, pricing, or pickup details, and build trust quickly.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon"></div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
         <h3>Pre-order and reserve</h3>
         <p>Reserve specialty items in advance, choose pickup times, and make sure your order is ready when you arrive.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon"></div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg></div>
         <h3>Smart cart and orders</h3>
         <p>Save favourites, add items to your cart, and keep track of your orders in one clean customer dashboard.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon"></div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></div>
         <h3>Seller dashboard</h3>
         <p>Sell with confidence by creating listings, managing inventory, and responding to buyers from a simple seller dashboard.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon"></div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
         <h3>Mobile first</h3>
         <p>Use the marketplace smoothly on mobile or desktop so buying and selling stays easy wherever you are in Zambia.</p>
       </div>
@@ -379,25 +477,25 @@
   <!-- HOW IT WORKS -->
   <div id="how" class="how-bg">
     <div class="section">
-      <div class="section-eyebrow">Process</div>
-      <div class="section-title">Shop in four steps</div>
-      <div class="steps" style="border:1px solid var(--border);border-radius:12px;overflow:hidden">
-        <div class="step">
+      <div class="section-eyebrow reveal">Process</div>
+      <div class="section-title reveal">Shop in four steps</div>
+      <div class="steps">
+        <div class="step reveal">
           <div class="step-num">STEP 01</div>
           <h4>Browse products</h4>
           <p>Search by category, location, or seller name to find exactly what you need.</p>
         </div>
-        <div class="step">
+        <div class="step reveal">
           <div class="step-num">STEP 02</div>
           <h4>Chat with seller</h4>
           <p>Confirm availability, ask questions, and agree on delivery or pickup.</p>
         </div>
-        <div class="step">
+        <div class="step reveal">
           <div class="step-num">STEP 03</div>
           <h4>Place your order</h4>
           <p>Add to cart and check out. Pre-orders can be reserved well in advance.</p>
         </div>
-        <div class="step">
+        <div class="step reveal">
           <div class="step-num">STEP 04</div>
           <h4>Receive your goods</h4>
           <p>Pick up locally or arrange delivery directly with your seller.</p>
@@ -407,7 +505,7 @@
   </div>
 
   <!-- TESTIMONIAL -->
-  <div class="testimonial-wrap">
+  <div class="testimonial-wrap reveal">
     <p class="teal-quote">I've been able to reach customers across Lusaka I never could before. Orders come in every single day now.</p>
     <div class="author">
       <div class="avatar">CM</div>
@@ -419,7 +517,7 @@
   </div>
 
   <!-- CTA STRIP -->
-  <div class="cta-strip">
+  <div class="cta-strip reveal">
     <div>
       <h2>Ready to start trading?</h2>
       <p>Join thousands of Zambians buying and selling local every day.</p>
@@ -429,14 +527,65 @@
 
   <!-- FOOTER -->
   <footer>
-    <span>© 2025 Zambian Marketplace</span>
-    <nav>
-      <a href="#">About</a>
-      <a href="#">Help</a>
-      <a href="seller.html">Sell with us</a>
-      <a href="login.html">Log in</a>
-    </nav>
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="logo">
+          <img src="assets/logo.png" class="logo-icon" alt="Zambian Marketplace logo" style="width:36px;height:36px" />
+          <span class="logo-text">Zambian<span>Marketplace</span></span>
+        </a>
+        <p>The local commerce platform connecting Zambian buyers and sellers, one order at a time.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Marketplace</h5>
+        <a href="shop.html">Shop</a>
+        <a href="seller.html">Sell with us</a>
+        <a href="cart.html">Cart</a>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <a href="#">About</a>
+        <a href="#">Careers</a>
+        <a href="#">Blog</a>
+      </div>
+      <div class="footer-col">
+        <h5>Support</h5>
+        <a href="#">Help centre</a>
+        <a href="#">Contact us</a>
+        <a href="login.html">Log in</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Zambian Marketplace. All rights reserved.</span>
+      <nav style="display:flex;gap:20px">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+      </nav>
+    </div>
   </footer>
+
+  <script>
+    // Nav elevation on scroll
+    const nav = document.getElementById('siteNav');
+    const onScroll = () => nav.classList.toggle('is-scrolled', window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Scroll-triggered reveal for sections/cards
+    const revealEls = document.querySelectorAll('.reveal');
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+      revealEls.forEach(el => io.observe(el));
+    } else {
+      revealEls.forEach(el => el.classList.add('is-visible'));
+    }
+  </script>
 
 </body>
 </html>

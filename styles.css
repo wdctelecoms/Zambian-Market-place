@@ -1,13 +1,29 @@
 :root {
   --bg: #fffaf5;
+  --bg2: #fff8ef;
+  --bg3: #fff2e5;
   --surface: #ffffff;
   --surface-2: #fff5eb;
-  --primary: #ff7a00;
+  --border: rgba(255, 122, 0, 0.16);
+  --border2: rgba(255, 122, 0, 0.28);
+  --accent: #ff7a00;
+  --accent2: #ff8f2d;
+  --accent-dim: #fff2e5;
+  --accent-glow: rgba(255,122,0,0.1);
+  --teal: var(--accent);
+  --teal2: var(--accent2);
+  --teal-dim: var(--accent-dim);
+  --teal-glow: var(--accent-glow);
+
+  /* backwards-compatible aliases used across the app */
+  --primary: var(--accent);
   --primary-dark: #e56d00;
-  --primary-soft: #fff2e5;
+  --primary-soft: var(--accent-dim);
+
   --text: #1f2a2e;
   --muted: #6f7a85;
-  --border: rgba(255, 122, 0, 0.16);
+  --text2: #6f7a85;
+  --text3: #8b95a0;
   --success: #3a9d2b;
   --warning: #ff9d2a;
   --danger: #dc2626;
@@ -103,6 +119,26 @@ textarea {
   margin-bottom: 1.5rem;
 }
 
+/* make page headers match intro navigation look */
+.page-header {
+  background: rgba(255,255,255,0.96);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  padding: 0.65rem 1rem;
+}
+
+/* Brand/logo inside page header */
+.page-header .brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.logo-img {
+  width: 56px;
+  height: auto;
+  border-radius: 10px;
+  flex: 0 0 auto;
+}
 .page-title {
   margin: 0;
   font-size: clamp(1.75rem, 2.1vw, 2.5rem);
