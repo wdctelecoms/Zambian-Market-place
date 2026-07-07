@@ -445,9 +445,9 @@ export const getCart = async (req: AuthenticatedRequest, res: Response) => {
     });
 
     const items = cart?.items ?? [];
-    const activeItems = items.filter((item) => !item.savedForLater);
-    const savedForLaterItems = items.filter((item) => item.savedForLater);
-    const subtotal = activeItems.reduce((sum, item) => sum + item.quantity * item.product.price, 0);
+    const activeItems = items.filter((item: (typeof items)[number]) => !item.savedForLater);
+    const savedForLaterItems = items.filter((item: (typeof items)[number]) => item.savedForLater);
+    const subtotal = activeItems.reduce((sum: number, item: (typeof items)[number]) => sum + item.quantity * item.product.price, 0);
     const deliveryFee = subtotal === 0 ? 0 : subtotal >= 100 ? 0 : 10;
     const total = subtotal + deliveryFee;
 

@@ -99,10 +99,10 @@ export const getDashboard = async (req: AuthenticatedRequest, res: Response) => 
       },
     });
 
-    const totalSales = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const totalSales = orderItems.reduce((sum: number, item: (typeof orderItems)[number]) => sum + item.price * item.quantity, 0);
     const todaySales = orderItems
-      .filter((item) => item.order.createdAt >= startOfToday)
-      .reduce((sum, item) => sum + item.price * item.quantity, 0);
+      .filter((item: (typeof orderItems)[number]) => item.order.createdAt >= startOfToday)
+      .reduce((sum: number, item: (typeof orderItems)[number]) => sum + item.price * item.quantity, 0);
     const totalProducts = await prisma.product.count({ where: { sellerId: seller.id } });
     const totalOrders = await prisma.order.count({
       where: {
@@ -188,9 +188,9 @@ export const getAnalytics = async (req: AuthenticatedRequest, res: Response) => 
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 5);
 
-    const inventoryValue = products.reduce((sum, product) => sum + product.price * product.stock, 0);
-    const unavailableProducts = products.filter((product) => !product.isAvailable).length;
-    const availableProducts = products.filter((product) => product.isAvailable).length;
+    const inventoryValue = products.reduce((sum: number, product: (typeof products)[number]) => sum + product.price * product.stock, 0);
+    const unavailableProducts = products.filter((product: (typeof products)[number]) => !product.isAvailable).length;
+    const availableProducts = products.filter((product: (typeof products)[number]) => product.isAvailable).length;
     const totalOrders = await prisma.order.count({
       where: {
         items: { some: { product: { sellerId: seller.id } } },
@@ -449,7 +449,7 @@ export const getSellerOrderById = async (req: AuthenticatedRequest, res: Respons
       },
     });
 
-    if (!order || order.items.every((item) => item.product.sellerId !== seller.id)) {
+    if (!order || order.items.every((item: (typeof order.items)[number]) => item.product.sellerId !== seller.id)) {
       res.status(404).json({ message: "Order not found" });
       return;
     }

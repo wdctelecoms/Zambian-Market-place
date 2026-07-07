@@ -434,13 +434,100 @@ async function bindCartPage() {
   }
 }
 
+function escapeHtml(value = "") {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Unable to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
 async function bindChatPage() {
   const conversationsList = document.getElementById("conversation-list");
   const chatThread = document.getElementById("chat-thread");
   const form = document.getElementById("chat-form");
+  const input = document.getElementById("chat-message");
+  const imageInput = document.getElementById("chat-image");
+  const imageButton = document.getElementById("chat-image-button");
+  const voiceButton = document.getElementById("chat-voice-button");
+  const orderButton = document.getElementById("chat-order-button");
+  const productButton = document.getElementById("chat-product-button");
+  const typingIndicator = document.getElementById("typing-indicator");
   if (!conversationsList || !chatThread || !form) return;
 
   let activePeerId = null;
+  let chatMessages = [];
+  let socket = null;
+  let typingTimeout = null;
+  let mediaRecorder = null;
+  let recordingStream = null;
+  let recordedChunks = [];
+  let isRecording = false;
+  let readMessageIds = new Set();
+
+  if (!isAuthenticated()) {
+    setStatus("chat-status", "Please sign in to use live chat.", "error");
+    conversationsList.innerHTML = '<div class="empty-state">Log in to start chatting.</div>';
+    chatThread.innerHTML = '<div class="empty-state">Authentication is required.</div>';
+    return;
+  }
+
+  const renderThread = () => {
+    if (!chatMessages.length) {
+      chatThread.innerHTML = '<div class="empty-state">Start a conversation and share details in real time.</div>';
+      return;
+    }
+
+    chatThread.innerHTML = chatMessages
+      .map((message) => {
+        const isSent = message.senderId === authState.user?.id;
+        let body = "";
+
+        if (message.type === "IMAGE" && message.mediaUrl) {
+          body = `<img class="chat-media" src="${escapeHtml(message.mediaUrl)}" alt="Shared image" />`;
+        } else if (message.type === "VOICE" && message.mediaUrl) {
+          body = `<audio controls src="${escapeHtml(message.mediaUrl)}"></audio>`;
+        } else if (message.type === "ORDER" && message.orderId) {
+          body = `<div class="chat-attachment">Order attachment: <strong>${escapeHtml(message.orderId)}</strong></div>`;
+        } else if (message.type === "PRODUCT" && message.productId) {
+          body = `<div class="chat-attachment">Shared product: <strong>${escapeHtml(message.productId)}</strong></div>`;
+        } else {
+          body = `<p>${escapeHtml(message.content || "Shared an item")}</p>`;
+        }
+
+        const statusText = isSent ? (message.isRead ? "Seen" : "Sent") : "";
+        return `
+          <div class="chat-message ${isSent ? "sent" : "received"}">
+            <div class="chat-meta">
+              <span>${isSent ? "You" : "Seller"}</span>
+              <span>${new Date(message.createdAt).toLocaleString()}</span>
+            </div>
+            ${body}
+            ${statusText ? `<div class="chat-meta"><span>${statusText}</span></div>` : ""}
+          </div>
+        `;
+      })
+      .join("");
+
+    chatThread.scrollTop = chatThread.scrollHeight;
+
+    chatMessages.forEach((message) => {
+      if (message.senderId !== authState.user?.id && !message.isRead && !readMessageIds.has(message.id)) {
+        readMessageIds.add(message.id);
+        markMessageAsRead(message.id);
+      }
+    });
+  };
 
   const loadConversations = async () => {
     try {
@@ -478,8 +565,8 @@ async function bindChatPage() {
         .map(
           (entry) => `
             <button type="button" class="list-item" data-user-id="${entry.user.id}">
-              <strong>${entry.user.fullName || entry.user.email}</strong>
-              <span>${entry.lastMessage.content || "New message"}</span>
+              <strong>${escapeHtml(entry.user.fullName || entry.user.email)}</strong>
+              <span>${escapeHtml(entry.lastMessage.content || "New message")}</span>
             </button>
           `,
         )
@@ -496,26 +583,110 @@ async function bindChatPage() {
     }
   };
 
+  const addMessageToThread = (message) => {
+    if (!message?.id) return;
+    const exists = chatMessages.some((entry) => entry.id === message.id);
+    if (exists) {
+      chatMessages = chatMessages.map((entry) => (entry.id === message.id ? { ...entry, ...message } : entry));
+    } else {
+      chatMessages = [...chatMessages, message];
+    }
+    renderThread();
+  };
+
+  const markMessageAsRead = async (messageId) => {
+    if (!messageId) return;
+    try {
+      if (socket?.connected) {
+        socket.emit("message_read", { messageId });
+      }
+      await requestJson(`/messages/${messageId}/read`, { method: "PATCH" });
+    } catch {
+      // Ignore read receipt failures for now.
+    }
+  };
+
   const loadThread = async (peerId) => {
+    if (!peerId) return;
     try {
       const messages = await requestJson(`/messages/conversations/${peerId}`);
-      chatThread.innerHTML = messages
-        .map((message) => {
-          const isSent = message.senderId === authState.user?.id;
-          return `
-            <div class="chat-message ${isSent ? "sent" : "received"}">
-              <div class="chat-meta">
-                <span>${isSent ? "You" : "Seller"}</span>
-                <span>${new Date(message.createdAt).toLocaleString()}</span>
-              </div>
-              <p>${message.content || "Shared an item"}</p>
-            </div>
-          `;
-        })
-        .join("");
+      chatMessages = messages;
+      renderThread();
       setStatus("chat-status", "Conversation loaded.", "success");
     } catch (error) {
       setStatus("chat-status", error.message || "Unable to load messages", "error");
+    }
+  };
+
+  const connectSocket = () => {
+    if (socket || !window.io) return;
+    socket = window.io(window.location.origin, {
+      auth: { token: getAccessToken() },
+      transports: ["websocket", "polling"],
+    });
+
+    socket.on("connect", () => {
+      setStatus("chat-status", "Connected to live chat.", "success");
+      if (activePeerId) {
+        loadThread(activePeerId);
+      }
+    });
+
+    socket.on("connect_error", () => {
+      setStatus("chat-status", "Realtime chat is temporarily unavailable.", "info");
+    });
+
+    socket.on("typing", ({ from, isTyping }) => {
+      if (from !== activePeerId) return;
+      if (typingTimeout) clearTimeout(typingTimeout);
+      typingIndicator.textContent = isTyping ? "Typing..." : "";
+      if (isTyping) {
+        typingTimeout = setTimeout(() => {
+          typingIndicator.textContent = "";
+        }, 1200);
+      }
+    });
+
+    socket.on("message_sent", (message) => {
+      addMessageToThread(message);
+      loadConversations();
+    });
+
+    socket.on("message_received", (message) => {
+      if (!activePeerId || (message.senderId !== activePeerId && message.receiverId !== activePeerId)) {
+        return;
+      }
+
+      addMessageToThread(message);
+      if (message.receiverId === authState.user?.id) {
+        markMessageAsRead(message.id);
+      }
+      loadConversations();
+    });
+
+    socket.on("message_read", (message) => {
+      if (!message?.id) return;
+      chatMessages = chatMessages.map((entry) => (entry.id === message.id ? { ...entry, ...message } : entry));
+      renderThread();
+    });
+  };
+
+  const sendMessage = async (payload) => {
+    if (!activePeerId) {
+      setStatus("chat-status", "Select a conversation first.", "error");
+      return;
+    }
+
+    if (socket?.connected) {
+      socket.emit("send_message", { to: activePeerId, ...payload });
+    } else {
+      const response = await requestJson("/messages/send", {
+        method: "POST",
+        body: JSON.stringify({ receiverId: activePeerId, ...payload }),
+      });
+      if (response?.id) {
+        loadThread(activePeerId);
+      }
     }
   };
 
@@ -524,28 +695,103 @@ async function bindChatPage() {
     if (!button) return;
     activePeerId = button.dataset.userId;
     loadThread(activePeerId);
+    if (socket?.connected) {
+      socket.emit("typing", { to: activePeerId, isTyping: false });
+    }
+  });
+
+  input.addEventListener("input", () => {
+    if (!activePeerId || !socket?.connected) return;
+    if (typingTimeout) clearTimeout(typingTimeout);
+    socket.emit("typing", { to: activePeerId, isTyping: true });
+    typingTimeout = setTimeout(() => {
+      socket.emit("typing", { to: activePeerId, isTyping: false });
+    }, 900);
+  });
+
+  imageButton?.addEventListener("click", () => imageInput?.click());
+  imageInput?.addEventListener("change", async () => {
+    const [file] = imageInput.files || [];
+    if (!file) return;
+    try {
+      const mediaUrl = await readFileAsDataUrl(file);
+      await sendMessage({ type: "IMAGE", mediaUrl, mediaMimeType: file.type || "image/*" });
+      imageInput.value = "";
+    } catch (error) {
+      setStatus("chat-status", error.message || "Unable to attach image", "error");
+    }
+  });
+
+  voiceButton?.addEventListener("click", async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setStatus("chat-status", "Voice notes are not supported in this browser.", "error");
+      return;
+    }
+
+    if (isRecording) {
+      mediaRecorder?.stop();
+      isRecording = false;
+      voiceButton.textContent = "Voice";
+      return;
+    }
+
+    try {
+      recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(recordingStream);
+      recordedChunks = [];
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size) recordedChunks.push(event.data);
+      };
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(recordedChunks, { type: mediaRecorder?.mimeType || "audio/webm" });
+        if (blob.size) {
+          const mediaUrl = await readFileAsDataUrl(new File([blob], "voice-note.webm", { type: blob.type }));
+          await sendMessage({ type: "VOICE", mediaUrl, mediaMimeType: blob.type || "audio/webm" });
+        }
+        recordingStream?.getTracks().forEach((track) => track.stop());
+      };
+      mediaRecorder.start();
+      isRecording = true;
+      voiceButton.textContent = "Stop";
+      setStatus("chat-status", "Recording voice note...", "info");
+    } catch (error) {
+      setStatus("chat-status", error.message || "Microphone access denied", "error");
+    }
+  });
+
+  orderButton?.addEventListener("click", async () => {
+    const orderId = window.prompt("Enter an order reference to attach")?.trim();
+    if (!orderId) return;
+    await sendMessage({ type: "ORDER", orderId });
+  });
+
+  productButton?.addEventListener("click", async () => {
+    const productId = window.prompt("Enter a product reference to share")?.trim();
+    if (!productId) return;
+    await sendMessage({ type: "PRODUCT", productId });
   });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const input = document.getElementById("chat-message");
+    const content = input.value.trim();
     if (!activePeerId) {
       setStatus("chat-status", "Select a conversation first.", "error");
       return;
     }
+    if (!content) {
+      setStatus("chat-status", "Type a message or attach media first.", "info");
+      return;
+    }
     try {
-      await requestJson("/messages/send", {
-        method: "POST",
-        body: JSON.stringify({ receiverId: activePeerId, type: "TEXT", content: input.value.trim() }),
-      });
+      await sendMessage({ type: "TEXT", content });
       input.value = "";
-      loadThread(activePeerId);
-      loadConversations();
+      setStatus("chat-status", "Message sent.", "success");
     } catch (error) {
       setStatus("chat-status", error.message || "Unable to send message", "error");
     }
   });
 
+  connectSocket();
   loadConversations();
 }
 
