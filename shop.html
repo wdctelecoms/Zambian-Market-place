@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dashboard | Zambian Marketplace</title>
-<meta name="description" content="Track orders, messages, listings, and payments on Zambian Marketplace." />
+<title>My Dashboard | Zambian Marketplace</title>
+<meta name="description" content="Track your orders, wishlist, and recommendations on Zambian Marketplace." />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -244,6 +244,7 @@ a{ color: inherit; }
     cursor: pointer;
     color: var(--color-ink-600);
     transition: border-color var(--transition), color var(--transition);
+    text-decoration: none;
 }
 
 .icon-btn:hover{ border-color: var(--color-primary-500); color: var(--color-primary-700); }
@@ -293,9 +294,29 @@ a{ color: inherit; }
     align-items: center;
     gap: 8px;
     transition: background var(--transition);
+    text-decoration: none;
 }
 
 .btn-primary:hover{ background: var(--color-primary-700); }
+
+.btn-secondary{
+    background: var(--color-surface);
+    color: var(--color-primary-700);
+    border: 1px solid var(--color-border);
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: border-color var(--transition);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-secondary:hover{ border-color: var(--color-primary-500); }
 
 /* ---------- Stat cards ---------- */
 .stat-grid{
@@ -342,7 +363,7 @@ a{ color: inherit; }
 }
 
 .stat-delta.up{ color: var(--color-primary-700); background: var(--color-primary-100); }
-.stat-delta.down{ color: var(--color-danger); background: var(--color-danger-100); }
+.stat-delta.neutral{ color: var(--color-ink-600); background: var(--color-bg); }
 
 .stat-value{
     font-family: var(--font-display);
@@ -359,6 +380,7 @@ a{ color: inherit; }
     grid-template-columns: 1.6fr 1fr;
     gap: 20px;
     align-items: start;
+    margin-bottom: 20px;
 }
 
 .panel{
@@ -392,44 +414,37 @@ a{ color: inherit; }
 
 .link-muted:hover{ text-decoration: underline; }
 
-/* ---------- Orders table ---------- */
-table{ width: 100%; border-collapse: collapse; }
+/* ---------- Order tracker list ---------- */
+.order-list{ padding: 6px 10px 14px; }
 
-th{
-    text-align: left;
-    font-size: 0.74rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--color-ink-400);
-    font-weight: 600;
-    padding: 10px 20px;
-    background: var(--color-bg);
+.order-row{
+    display: grid;
+    grid-template-columns: 52px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 10px;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition);
 }
 
-td{
-    padding: 13px 20px;
-    font-size: 0.87rem;
-    border-top: 1px solid var(--color-border);
-    vertical-align: middle;
-}
+.order-row:hover{ background: var(--color-bg); }
 
-.order-id{ font-family: var(--font-mono); font-size: 0.78rem; color: var(--color-ink-600); }
-
-.order-buyer{ display: flex; align-items: center; gap: 9px; }
-
-.mini-avatar{
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
+.order-thumb{
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-sm);
     background: var(--color-primary-100);
     color: var(--color-primary-700);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.68rem;
-    font-weight: 700;
     flex-shrink: 0;
 }
+
+.order-info-title{ font-size: 0.9rem; font-weight: 600; margin-bottom: 2px; }
+.order-info-meta{ font-size: 0.78rem; color: var(--color-ink-600); }
+
+.order-status{ text-align: right; }
 
 .badge{
     display: inline-block;
@@ -437,77 +452,178 @@ td{
     font-weight: 600;
     padding: 3px 10px;
     border-radius: 999px;
+    white-space: nowrap;
 }
 
-.badge.paid{ background: var(--color-primary-100); color: var(--color-primary-700); }
-.badge.pending{ background: var(--color-accent-100); color: var(--color-accent-600); }
-.badge.cancelled{ background: var(--color-danger-100); color: var(--color-danger); }
+.badge.processing{ background: var(--color-accent-100); color: var(--color-accent-600); }
+.badge.shipped{ background: var(--color-blue-100); color: var(--color-blue-500); }
+.badge.delivered{ background: var(--color-primary-100); color: var(--color-primary-700); }
 
-/* ---------- Activity timeline ---------- */
-.timeline{ padding: 6px 20px 20px; }
+.order-eta{ font-size: 0.76rem; color: var(--color-ink-400); margin-top: 4px; }
 
-.timeline-item{
+/* ---------- Wishlist / rewards ---------- */
+.reward-card{
+    background: linear-gradient(135deg, var(--color-primary-900), var(--color-primary-700));
+    color: #F3F5F1;
+    border-radius: var(--radius-md);
+    padding: 20px;
+    box-shadow: var(--shadow-card);
+}
+
+.reward-card p.reward-label{ font-size: 0.82rem; color: rgba(243,245,241,0.7); margin-bottom: 4px; }
+.reward-card p.reward-value{ font-family: var(--font-display); font-size: 1.8rem; font-weight: 600; margin-bottom: 14px; }
+
+.reward-bar{
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.16);
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.reward-bar-fill{
+    height: 100%;
+    background: var(--color-accent-500);
+    border-radius: 999px;
+    width: 62%;
+}
+
+.reward-card .reward-note{ font-size: 0.76rem; color: rgba(243,245,241,0.65); }
+
+.wishlist-item{
     display: flex;
-    gap: 14px;
-    padding: 14px 0;
-    position: relative;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--color-border);
 }
 
-.timeline-item:not(:last-child)::before{
-    content: "";
-    position: absolute;
-    left: 15px;
-    top: 34px;
-    bottom: -6px;
-    width: 1px;
-    background: var(--color-border);
-}
+.wishlist-item:first-child{ border-top: none; }
 
-.timeline-dot{
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
+.wishlist-thumb{
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    background: var(--color-accent-100);
+    color: var(--color-accent-600);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    z-index: 1;
 }
 
-.timeline-dot.order{ background: var(--color-primary-100); color: var(--color-primary-700); }
-.timeline-dot.message{ background: var(--color-blue-100); color: var(--color-blue-500); }
-.timeline-dot.listing{ background: var(--color-accent-100); color: var(--color-accent-600); }
-.timeline-dot.payment{ background: var(--color-primary-100); color: var(--color-primary-700); }
+.wishlist-name{ font-size: 0.86rem; font-weight: 500; }
+.wishlist-price{ font-size: 0.78rem; color: var(--color-ink-600); }
 
-.timeline-body p{ font-size: 0.87rem; margin-bottom: 2px; }
-.timeline-body p strong{ font-weight: 600; }
-.timeline-time{ font-size: 0.76rem; color: var(--color-ink-400); }
-
-/* ---------- Quick actions ---------- */
-.quick-actions{ padding: 18px 20px; display: grid; gap: 10px; }
-
-.quick-action{
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
+.wishlist-add{
+    margin-left: auto;
+    background: none;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--color-primary-700);
+    flex-shrink: 0;
+    transition: border-color var(--transition);
+}
+
+.wishlist-add:hover{ border-color: var(--color-primary-500); background: var(--color-primary-100); }
+
+/* ---------- Recommended products ---------- */
+.product-grid{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.product-card{
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+}
+
+.product-thumb{
+    aspect-ratio: 1.3 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-surface);
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 600;
+}
+
+.product-body{ padding: 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+
+.product-name{ font-size: 0.88rem; font-weight: 600; }
+.product-meta{ font-size: 0.78rem; color: var(--color-ink-600); }
+
+.product-footer{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 6px;
+}
+
+.product-price{ font-family: var(--font-display); font-weight: 600; font-size: 1rem; }
+
+.product-cart-btn{
+    background: var(--color-primary-100);
+    color: var(--color-primary-700);
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.product-cart-btn:hover{ background: var(--color-primary-500); color: #fff; }
+
+/* ---------- Category shortcuts ---------- */
+.category-scroller{
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 4px 2px 4px;
+    margin-bottom: 28px;
+}
+
+.category-chip{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 0.84rem;
+    font-weight: 500;
     text-decoration: none;
     color: var(--color-ink-900);
-    font-size: 0.87rem;
-    font-weight: 500;
     transition: border-color var(--transition), background var(--transition);
 }
 
-.quick-action:hover{ border-color: var(--color-primary-500); background: var(--color-primary-100); }
-
-.quick-action svg{ color: var(--color-primary-700); flex-shrink: 0; }
+.category-chip:hover{ border-color: var(--color-primary-500); background: var(--color-primary-100); }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1080px){
     .stat-grid{ grid-template-columns: repeat(2, 1fr); }
     .grid-2col{ grid-template-columns: 1fr; }
+    .product-grid{ grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 860px){
@@ -526,10 +642,11 @@ td{
 
 @media (max-width: 640px){
     .stat-grid{ grid-template-columns: 1fr; }
+    .product-grid{ grid-template-columns: 1fr 1fr; }
     .content{ padding: 22px 16px 50px; }
     .topbar{ padding: 16px; }
-    table{ font-size: 0.8rem; }
-    th:nth-child(3), td:nth-child(3){ display: none; }
+    .order-row{ grid-template-columns: 44px 1fr; }
+    .order-status{ grid-column: 2; text-align: left; margin-top: 4px; }
 }
 
 @media (prefers-reduced-motion: reduce){
@@ -550,32 +667,36 @@ td{
         </div>
 
         <nav class="nav-group">
-            <p class="nav-label">Overview</p>
+            <p class="nav-label">Shopping</p>
             <a class="nav-link active" href="dashboard.html">
                 <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><rect x="2" y="2" width="5.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="2" width="5.5" height="4" rx="1.2" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="8" width="5.5" height="7" rx="1.2" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="10.5" width="5.5" height="4.5" rx="1.2" stroke="currentColor" stroke-width="1.4"/></svg>
-                Dashboard
+                Overview
             </a>
             <a class="nav-link" href="orders.html">
                 <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M3 5h11l-1 8.5a1.2 1.2 0 0 1-1.2 1H5.2a1.2 1.2 0 0 1-1.2-1L3 5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M6 5V3.8A2.3 2.3 0 0 1 8.3 1.5v0A2.3 2.3 0 0 1 10.6 3.8V5" stroke="currentColor" stroke-width="1.4"/></svg>
-                Orders
-                <span class="nav-badge">6</span>
+                My Orders
+                <span class="nav-badge">2</span>
+            </a>
+            <a class="nav-link" href="wishlist.html">
+                <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M8.5 14.2s-5.8-3.4-5.8-7.6a3.1 3.1 0 0 1 5.8-1.6 3.1 3.1 0 0 1 5.8 1.6c0 4.2-5.8 7.6-5.8 7.6Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+                Wishlist
             </a>
             <a class="nav-link" href="messages.html">
                 <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h10A1.5 1.5 0 0 1 15 4.5v6A1.5 1.5 0 0 1 13.5 12H6l-3 2.5V12h-.5A1.5 1.5 0 0 1 1 10.5v-6Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
                 Messages
-                <span class="nav-badge">3</span>
-            </a>
-            <a class="nav-link" href="listings.html">
-                <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><rect x="2" y="2" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.5h13" stroke="currentColor" stroke-width="1.4"/></svg>
-                Listings
+                <span class="nav-badge">1</span>
             </a>
         </nav>
 
         <nav class="nav-group">
             <p class="nav-label">Account</p>
-            <a class="nav-link" href="payments.html">
+            <a class="nav-link" href="addresses.html">
+                <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M8.5 15s5-4.5 5-8.5a5 5 0 0 0-10 0c0 4 5 8.5 5 8.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="8.5" cy="6.5" r="1.7" stroke="currentColor" stroke-width="1.4"/></svg>
+                Addresses
+            </a>
+            <a class="nav-link" href="payment-methods.html">
                 <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><rect x="2" y="4" width="13" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 7h13" stroke="currentColor" stroke-width="1.4"/></svg>
-                Payments
+                Payment methods
             </a>
             <a class="nav-link" href="settings.html">
                 <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><circle cx="8.5" cy="8.5" r="2.3" stroke="currentColor" stroke-width="1.4"/><path d="M8.5 2v1.6M8.5 13.4V15M2 8.5h1.6M13.4 8.5H15M4.2 4.2l1.1 1.1M11.2 11.2l1.1 1.1M4.2 12.8l1.1-1.1M11.2 5.8l1.1-1.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
@@ -585,10 +706,10 @@ td{
 
         <div class="sidebar-footer">
             <div class="sidebar-user">
-                <div class="avatar">WD</div>
+                <div class="avatar">CM</div>
                 <div>
-                    <div class="sidebar-user-name">Washington D.</div>
-                    <div class="sidebar-user-role">Seller account</div>
+                    <div class="sidebar-user-name">Chanda Mwape</div>
+                    <div class="sidebar-user-role">Customer account</div>
                 </div>
             </div>
         </div>
@@ -604,7 +725,7 @@ td{
                 </button>
                 <div class="search-wrap">
                     <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.4"/><path d="M13 13l-3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-                    <input type="text" placeholder="Search orders, buyers, listings..." aria-label="Search" />
+                    <input type="text" placeholder="Search products, sellers..." aria-label="Search" />
                 </div>
             </div>
 
@@ -613,7 +734,11 @@ td{
                     <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M4 7a4.5 4.5 0 0 1 9 0c0 3 1 3.8 1 4.3H3c0-.5 1-1.3 1-4.3Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M7 13.5a1.5 1.5 0 0 0 3 0" stroke="currentColor" stroke-width="1.4"/></svg>
                     <span class="icon-dot"></span>
                 </button>
-                <div class="avatar">WD</div>
+                <a class="icon-btn" href="cart.html" aria-label="Cart">
+                    <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M2 3h1.6l1.4 8.4a1.5 1.5 0 0 0 1.5 1.3h6a1.5 1.5 0 0 0 1.5-1.2L15 5.5H4.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="14.5" r="1" stroke="currentColor" stroke-width="1.2"/><circle cx="12.5" cy="14.5" r="1" stroke="currentColor" stroke-width="1.2"/></svg>
+                    <span class="icon-dot"></span>
+                </a>
+                <div class="avatar">CM</div>
             </div>
         </header>
 
@@ -621,37 +746,47 @@ td{
 
             <div class="page-heading">
                 <div>
-                    <h1>Welcome back, Washington</h1>
-                    <p>Here's what's happening across your marketplace activity today.</p>
+                    <h1>Welcome back, Chanda</h1>
+                    <p>Here's an overview of your orders, wishlist, and picks for you.</p>
                 </div>
-                <button class="btn-primary">
-                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 3v9M3 7.5h9" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
-                    New listing
-                </button>
+                <a href="shop.html" class="btn-primary">
+                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="6.5" cy="6.5" r="4.5" stroke="#fff" stroke-width="1.5"/><path d="M13 13l-3-3" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    Continue shopping
+                </a>
+            </div>
+
+            <!-- Category shortcuts -->
+            <div class="category-scroller">
+                <a class="category-chip" href="shop.html?category=fabrics">🧵 Fabrics</a>
+                <a class="category-chip" href="shop.html?category=electronics">🔌 Electronics</a>
+                <a class="category-chip" href="shop.html?category=home">🏡 Home &amp; Living</a>
+                <a class="category-chip" href="shop.html?category=agriculture">🌽 Agriculture</a>
+                <a class="category-chip" href="shop.html?category=fashion">👗 Fashion</a>
+                <a class="category-chip" href="shop.html?category=phones">📱 Phones &amp; Accessories</a>
             </div>
 
             <!-- Stats -->
             <section class="stat-grid">
                 <div class="stat-card">
                     <div class="stat-top">
-                        <div class="stat-icon green">
-                            <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M2 12l3.5-4 3 2.5L14 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <div class="stat-icon amber">
+                            <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M3 5h11l-1 8.5a1.2 1.2 0 0 1-1.2 1H5.2a1.2 1.2 0 0 1-1.2-1L3 5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
                         </div>
-                        <span class="stat-delta up">+12.4%</span>
+                        <span class="stat-delta neutral">In progress</span>
                     </div>
-                    <div class="stat-value">K 8,240</div>
-                    <div class="stat-label">Sales this month</div>
+                    <div class="stat-value">2</div>
+                    <div class="stat-label">Active orders</div>
                 </div>
 
                 <div class="stat-card">
                     <div class="stat-top">
-                        <div class="stat-icon amber">
-                            <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M3 5h11l-1 8.5a1.2 1.2 0 0 1-1.2 1H5.2a1.2 1.2 0 0 1-1.2-1L3 5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+                        <div class="stat-icon red">
+                            <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M8.5 14.2s-5.8-3.4-5.8-7.6a3.1 3.1 0 0 1 5.8-1.6 3.1 3.1 0 0 1 5.8 1.6c0 4.2-5.8 7.6-5.8 7.6Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
                         </div>
-                        <span class="stat-delta up">+3</span>
+                        <span class="stat-delta up">+2</span>
                     </div>
-                    <div class="stat-value">6</div>
-                    <div class="stat-label">Active orders</div>
+                    <div class="stat-value">7</div>
+                    <div class="stat-label">Saved to wishlist</div>
                 </div>
 
                 <div class="stat-card">
@@ -659,193 +794,204 @@ td{
                         <div class="stat-icon blue">
                             <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h10A1.5 1.5 0 0 1 15 4.5v6A1.5 1.5 0 0 1 13.5 12H6l-3 2.5V12h-.5A1.5 1.5 0 0 1 1 10.5v-6Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
                         </div>
-                        <span class="stat-delta up">+3 new</span>
+                        <span class="stat-delta up">+1 new</span>
                     </div>
-                    <div class="stat-value">3</div>
+                    <div class="stat-value">1</div>
                     <div class="stat-label">Unread messages</div>
                 </div>
 
                 <div class="stat-card">
                     <div class="stat-top">
-                        <div class="stat-icon red">
-                            <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><circle cx="8.5" cy="8.5" r="6.5" stroke="currentColor" stroke-width="1.4"/><path d="M8.5 5.5v3.5l2.3 1.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                        <div class="stat-icon green">
+                            <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M8.5 2l1.8 3.8 4.1.5-3 2.9.7 4.1-3.6-2-3.6 2 .7-4.1-3-2.9 4.1-.5L8.5 2Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
                         </div>
-                        <span class="stat-delta down">-1</span>
+                        <span class="stat-delta up">Gold tier</span>
                     </div>
-                    <div class="stat-value">2</div>
-                    <div class="stat-label">Listings needing action</div>
+                    <div class="stat-value">1,240</div>
+                    <div class="stat-label">Reward points</div>
                 </div>
             </section>
 
-            <!-- Orders + timeline -->
+            <!-- Orders + rewards/wishlist -->
             <section class="grid-2col">
 
                 <div class="panel">
                     <div class="panel-header">
-                        <h2>Recent orders</h2>
+                        <h2>Track your orders</h2>
                         <a href="orders.html" class="link-muted">View all</a>
                     </div>
-                    <div style="overflow-x:auto;">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Order</th>
-                                    <th>Buyer</th>
-                                    <th>Item</th>
-                                    <th>Amount</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="order-id">#ZM-2041</td>
-                                    <td>
-                                        <div class="order-buyer">
-                                            <div class="mini-avatar">CM</div>
-                                            Chanda M.
-                                        </div>
-                                    </td>
-                                    <td>Chitenge fabric bundle</td>
-                                    <td>K 340</td>
-                                    <td><span class="badge paid">Paid</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="order-id">#ZM-2040</td>
-                                    <td>
-                                        <div class="order-buyer">
-                                            <div class="mini-avatar">BT</div>
-                                            Bwalya T.
-                                        </div>
-                                    </td>
-                                    <td>Solar lantern (10W)</td>
-                                    <td>K 610</td>
-                                    <td><span class="badge pending">Pending</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="order-id">#ZM-2039</td>
-                                    <td>
-                                        <div class="order-buyer">
-                                            <div class="mini-avatar">NK</div>
-                                            Natasha K.
-                                        </div>
-                                    </td>
-                                    <td>Maize seed, 5kg</td>
-                                    <td>K 150</td>
-                                    <td><span class="badge paid">Paid</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="order-id">#ZM-2038</td>
-                                    <td>
-                                        <div class="order-buyer">
-                                            <div class="mini-avatar">JP</div>
-                                            John P.
-                                        </div>
-                                    </td>
-                                    <td>Phone accessories set</td>
-                                    <td>K 95</td>
-                                    <td><span class="badge cancelled">Cancelled</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="order-id">#ZM-2037</td>
-                                    <td>
-                                        <div class="order-buyer">
-                                            <div class="mini-avatar">ML</div>
-                                            Mwansa L.
-                                        </div>
-                                    </td>
-                                    <td>Office chair</td>
-                                    <td>K 890</td>
-                                    <td><span class="badge paid">Paid</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="order-list">
+
+                        <div class="order-row">
+                            <div class="order-thumb">
+                                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 6h13l-1 10a1.4 1.4 0 0 1-1.4 1.2H5.4A1.4 1.4 0 0 1 4 16L3 6Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div>
+                                <div class="order-info-title">Chitenge fabric bundle</div>
+                                <div class="order-info-meta">Order #ZM-2041 · Sold by Bwalya Textiles</div>
+                            </div>
+                            <div class="order-status">
+                                <span class="badge shipped">Shipped</span>
+                                <div class="order-eta">Arriving Thu, 17 Jul</div>
+                            </div>
+                        </div>
+
+                        <div class="order-row">
+                            <div class="order-thumb">
+                                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 8h14v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 8l3-4h8l3 4" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div>
+                                <div class="order-info-title">Solar lantern, 10W</div>
+                                <div class="order-info-meta">Order #ZM-2036 · Sold by SunPower ZM</div>
+                            </div>
+                            <div class="order-status">
+                                <span class="badge processing">Processing</span>
+                                <div class="order-eta">Preparing for dispatch</div>
+                            </div>
+                        </div>
+
+                        <div class="order-row">
+                            <div class="order-thumb">
+                                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="4" y="4" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 11l2.5 2.5L15 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div>
+                                <div class="order-info-title">Maize seed, 5kg</div>
+                                <div class="order-info-meta">Order #ZM-2029 · Sold by Green Harvest</div>
+                            </div>
+                            <div class="order-status">
+                                <span class="badge delivered">Delivered</span>
+                                <div class="order-eta">Delivered 6 Jul</div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
                 <div style="display:grid; gap:20px;">
 
-                    <div class="panel">
-                        <div class="panel-header">
-                            <h2>Activity</h2>
-                            <a href="activity.html" class="link-muted">View all</a>
-                        </div>
-                        <div class="timeline">
-
-                            <div class="timeline-item">
-                                <div class="timeline-dot order">
-                                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2.5 4.5h10l-1 7.5a1 1 0 0 1-1 .9H4.5a1 1 0 0 1-1-.9l-1-7.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
-                                </div>
-                                <div class="timeline-body">
-                                    <p><strong>New order</strong> from Chanda M. — K 340</p>
-                                    <span class="timeline-time">12 minutes ago</span>
-                                </div>
-                            </div>
-
-                            <div class="timeline-item">
-                                <div class="timeline-dot message">
-                                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h8A1.5 1.5 0 0 1 13 4.5v5A1.5 1.5 0 0 1 11.5 11H6l-2.5 2v-2H3.5A1.5 1.5 0 0 1 2 9.5v-5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
-                                </div>
-                                <div class="timeline-body">
-                                    <p><strong>Bwalya T.</strong> asked about delivery time</p>
-                                    <span class="timeline-time">40 minutes ago</span>
-                                </div>
-                            </div>
-
-                            <div class="timeline-item">
-                                <div class="timeline-dot payment">
-                                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="2" y="4" width="11" height="8" rx="1.3" stroke="currentColor" stroke-width="1.3"/><path d="M2 6.5h11" stroke="currentColor" stroke-width="1.3"/></svg>
-                                </div>
-                                <div class="timeline-body">
-                                    <p>Payment of <strong>K 150</strong> received from Natasha K.</p>
-                                    <span class="timeline-time">2 hours ago</span>
-                                </div>
-                            </div>
-
-                            <div class="timeline-item">
-                                <div class="timeline-dot listing">
-                                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="2" y="2" width="11" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2 5.5h11" stroke="currentColor" stroke-width="1.3"/></svg>
-                                </div>
-                                <div class="timeline-body">
-                                    <p><strong>Office chair</strong> listing approved and live</p>
-                                    <span class="timeline-time">5 hours ago</span>
-                                </div>
-                            </div>
-
-                            <div class="timeline-item">
-                                <div class="timeline-dot order">
-                                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2.5 4.5h10l-1 7.5a1 1 0 0 1-1 .9H4.5a1 1 0 0 1-1-.9l-1-7.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
-                                </div>
-                                <div class="timeline-body">
-                                    <p>Order <strong>#ZM-2038</strong> was cancelled by buyer</p>
-                                    <span class="timeline-time">Yesterday</span>
-                                </div>
-                            </div>
-
-                        </div>
+                    <div class="reward-card">
+                        <p class="reward-label">Your reward balance</p>
+                        <p class="reward-value">1,240 pts</p>
+                        <div class="reward-bar"><div class="reward-bar-fill"></div></div>
+                        <p class="reward-note">760 points to Platinum tier</p>
                     </div>
 
                     <div class="panel">
                         <div class="panel-header">
-                            <h2>Quick actions</h2>
+                            <h2>From your wishlist</h2>
+                            <a href="wishlist.html" class="link-muted">View all</a>
                         </div>
-                        <div class="quick-actions">
-                            <a class="quick-action" href="listings.html?new=1">
-                                <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M8.5 3v11M3 8.5h11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                                Add a new listing
-                            </a>
-                            <a class="quick-action" href="messages.html">
-                                <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h10A1.5 1.5 0 0 1 15 4.5v6A1.5 1.5 0 0 1 13.5 12H6l-3 2.5V12h-.5A1.5 1.5 0 0 1 1 10.5v-6Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-                                Reply to messages
-                            </a>
-                            <a class="quick-action" href="payments.html">
-                                <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><rect x="2" y="4" width="13" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 7h13" stroke="currentColor" stroke-width="1.4"/></svg>
-                                Withdraw earnings
-                            </a>
+
+                        <div class="wishlist-item">
+                            <div class="wishlist-thumb">
+                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/></svg>
+                            </div>
+                            <div>
+                                <div class="wishlist-name">Office chair, ergonomic</div>
+                                <div class="wishlist-price">K 890</div>
+                            </div>
+                            <button class="wishlist-add" aria-label="Add to cart">
+                                <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 3v9M3 7.5h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                            </button>
                         </div>
+
+                        <div class="wishlist-item">
+                            <div class="wishlist-thumb">
+                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.4"/></svg>
+                            </div>
+                            <div>
+                                <div class="wishlist-name">Wireless earbuds</div>
+                                <div class="wishlist-price">K 420</div>
+                            </div>
+                            <button class="wishlist-add" aria-label="Add to cart">
+                                <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 3v9M3 7.5h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                            </button>
+                        </div>
+
+                        <div class="wishlist-item">
+                            <div class="wishlist-thumb">
+                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9h12M9 3v12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                            </div>
+                            <div>
+                                <div class="wishlist-name">Kitchen blender, 1.5L</div>
+                                <div class="wishlist-price">K 310</div>
+                            </div>
+                            <button class="wishlist-add" aria-label="Add to cart">
+                                <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 3v9M3 7.5h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                            </button>
+                        </div>
+
                     </div>
 
                 </div>
 
+            </section>
+
+            <!-- Recommended for you -->
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>Recommended for you</h2>
+                    <a href="shop.html" class="link-muted">Browse all</a>
+                </div>
+                <div class="product-grid" style="padding: 18px 20px;">
+
+                    <div class="product-card">
+                        <div class="product-thumb" style="background: var(--color-primary-500);">CF</div>
+                        <div class="product-body">
+                            <div class="product-name">Chitenge fabric, 6 yards</div>
+                            <div class="product-meta">Bwalya Textiles</div>
+                            <div class="product-footer">
+                                <span class="product-price">K 280</span>
+                                <button class="product-cart-btn" aria-label="Add to cart">
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="product-card">
+                        <div class="product-thumb" style="background: var(--color-accent-500);">SL</div>
+                        <div class="product-body">
+                            <div class="product-name">Solar lantern, 10W</div>
+                            <div class="product-meta">SunPower ZM</div>
+                            <div class="product-footer">
+                                <span class="product-price">K 610</span>
+                                <button class="product-cart-btn" aria-label="Add to cart">
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="product-card">
+                        <div class="product-thumb" style="background: var(--color-blue-500);">WE</div>
+                        <div class="product-body">
+                            <div class="product-name">Wireless earbuds</div>
+                            <div class="product-meta">TechHub Lusaka</div>
+                            <div class="product-footer">
+                                <span class="product-price">K 420</span>
+                                <button class="product-cart-btn" aria-label="Add to cart">
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="product-card">
+                        <div class="product-thumb" style="background: var(--color-primary-700);">MS</div>
+                        <div class="product-body">
+                            <div class="product-name">Maize seed, 5kg</div>
+                            <div class="product-meta">Green Harvest</div>
+                            <div class="product-footer">
+                                <span class="product-price">K 150</span>
+                                <button class="product-cart-btn" aria-label="Add to cart">
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </section>
 
         </main>
