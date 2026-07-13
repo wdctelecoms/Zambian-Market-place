@@ -1,44 +1,496 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Shopping Cart — Zambian Marketplace</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div class="container">
-      <header class="page-header">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shopping Cart | Zambian Marketplace</title>
+<meta name="description" content="Review items, update quantities, and proceed to checkout on Zambian Marketplace." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+/* ---------- Design tokens (shared with login.html / register.html / dashboard.html) ---------- */
+:root{
+    --color-primary-900: #0B3D24;
+    --color-primary-700: #145C36;
+    --color-primary-500: #1F7A4D;
+    --color-primary-100: #E5F0EA;
+    --color-accent-500:  #C97A2B;
+    --color-accent-600:  #B06A22;
+    --color-accent-100:  #F6E9DA;
+    --color-blue-500:    #2E6E9E;
+    --color-blue-100:    #E4EEF5;
+    --color-bg:          #FAF9F5;
+    --color-surface:     #FFFFFF;
+    --color-ink-900:     #1B2420;
+    --color-ink-600:     #55625A;
+    --color-ink-400:     #8A968E;
+    --color-border:      #E3E4DE;
+    --color-danger:      #B3402B;
+    --color-danger-100:  #F7E7E3;
+
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+
+    --shadow-card: 0 1px 2px rgba(17, 24, 20, 0.04), 0 10px 28px rgba(17, 24, 20, 0.06);
+    --transition: 160ms ease;
+}
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+body{
+    font-family: var(--font-body);
+    background: var(--color-bg);
+    color: var(--color-ink-900);
+    line-height: 1.5;
+}
+
+a{ color: inherit; }
+
+.container{
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ---------- Header ---------- */
+.page-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+}
+
+.brand{ display: flex; align-items: center; gap: 14px; }
+
+.brand a{ display: flex; }
+
+.logo-img{
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: var(--color-primary-900);
+    object-fit: contain;
+    padding: 6px;
+}
+
+.page-title{
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.4rem;
+    color: var(--color-ink-900);
+}
+
+.page-description{
+    font-size: 0.88rem;
+    color: var(--color-ink-600);
+    margin-top: 2px;
+}
+
+.header-nav{ display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+
+.header-nav a{
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-ink-600);
+    text-decoration: none;
+    transition: color var(--transition);
+}
+
+.header-nav a:hover{ color: var(--color-primary-700); }
+
+.header-nav a[data-action="logout"]{
+    color: var(--color-danger);
+    padding: 7px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+}
+
+.header-nav a[data-action="logout"]:hover{
+    border-color: var(--color-danger);
+    background: var(--color-danger-100);
+}
+
+/* ---------- Card ---------- */
+.card{
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 28px 30px;
+}
+
+.card h2{
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.15rem;
+    margin-bottom: 4px;
+}
+
+.status-message{
+    min-height: 18px;
+    font-size: 0.85rem;
+    color: var(--color-primary-700);
+    margin-top: 10px;
+}
+
+.status-message.is-error{ color: var(--color-danger); }
+
+/* ---------- Cart summary ---------- */
+.summary-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-size: 0.92rem;
+    color: var(--color-ink-600);
+}
+
+.summary-row.total{
+    border-top: 1px solid var(--color-border);
+    margin-top: 6px;
+    padding-top: 16px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-ink-900);
+}
+
+.summary-row .value{ font-family: var(--font-display); font-weight: 600; color: var(--color-ink-900); }
+
+.promo-row{
+    display: flex;
+    gap: 10px;
+    margin: 18px 0 4px;
+}
+
+.promo-row input{
+    flex: 1;
+    padding: 11px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    font-family: var(--font-body);
+    background: var(--color-bg);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.promo-row input:focus{
+    outline: none;
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 3px rgba(31,122,77,0.14);
+    background: var(--color-surface);
+}
+
+.btn-outline{
+    background: var(--color-surface);
+    color: var(--color-primary-700);
+    border: 1px solid var(--color-border);
+    padding: 0 18px;
+    border-radius: var(--radius-sm);
+    font-size: 0.86rem;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: border-color var(--transition);
+}
+
+.btn-outline:hover{ border-color: var(--color-primary-500); }
+
+.btn-primary{
+    width: 100%;
+    background: var(--color-primary-900);
+    color: #fff;
+    border: none;
+    padding: 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.96rem;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    margin-top: 18px;
+    transition: background var(--transition), transform var(--transition);
+}
+
+.btn-primary:hover{ background: var(--color-primary-700); }
+.btn-primary:active{ transform: translateY(1px); }
+.btn-primary:disabled{ background: var(--color-ink-400); cursor: not-allowed; }
+
+.secure-note{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--color-ink-400);
+    margin-top: 12px;
+}
+
+/* ---------- Cart items ---------- */
+.grid{ display: grid; gap: 14px; }
+
+.cart-item{
+    display: grid;
+    grid-template-columns: 64px 1fr auto auto;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition: border-color var(--transition);
+}
+
+.cart-item:hover{ border-color: var(--color-primary-500); }
+
+.item-thumb{
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.item-name{ font-size: 0.94rem; font-weight: 600; margin-bottom: 3px; }
+.item-seller{ font-size: 0.8rem; color: var(--color-ink-600); }
+.item-price-each{ font-size: 0.78rem; color: var(--color-ink-400); margin-top: 4px; }
+
+.qty-control{
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.qty-btn{
+    width: 30px;
+    height: 30px;
+    background: var(--color-bg);
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--color-ink-900);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition);
+}
+
+.qty-btn:hover{ background: var(--color-primary-100); color: var(--color-primary-700); }
+
+.qty-value{
+    width: 32px;
+    text-align: center;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.item-right{ display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+
+.item-total{ font-family: var(--font-display); font-weight: 600; font-size: 1rem; }
+
+.remove-btn{
+    background: none;
+    border: none;
+    color: var(--color-ink-400);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    padding: 2px;
+    transition: color var(--transition);
+}
+
+.remove-btn:hover{ color: var(--color-danger); }
+
+/* ---------- Empty state ---------- */
+.empty-state{
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--color-ink-600);
+}
+
+.empty-state svg{ color: var(--color-ink-400); margin-bottom: 14px; }
+.empty-state h3{ font-family: var(--font-display); font-size: 1.1rem; color: var(--color-ink-900); margin-bottom: 6px; }
+.empty-state p{ font-size: 0.88rem; margin-bottom: 18px; }
+
+.footer-note{
+    text-align: center;
+    color: var(--color-ink-400);
+    font-size: 0.82rem;
+    margin-top: auto;
+    padding-top: 40px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px){
+    .card{ padding: 22px 18px; }
+    .cart-item{
+        grid-template-columns: 52px 1fr;
+        row-gap: 10px;
+    }
+    .item-right{ grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
+    .qty-control{ grid-column: 1 / -1; justify-self: start; }
+    .header-nav{ gap: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; }
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+
+    <header class="page-header">
         <div class="brand">
-          <a href="index.html"><img src="assets/logo.png" class="logo-img" alt="Zambian Marketplace" /></a>
-          <div>
-            <h1 class="page-title">Shopping Cart</h1>
-            <p class="page-description">Review items, update quantities, and proceed to checkout.</p>
-          </div>
+            <a href="index.html"><img src="assets/logo.png" class="logo-img" alt="Zambian Marketplace" /></a>
+            <div>
+                <h1 class="page-title">Shopping Cart</h1>
+                <p class="page-description">Review items, update quantities, and proceed to checkout.</p>
+            </div>
         </div>
         <nav class="header-nav">
-          <a href="index.html">Home</a>
-          <a href="shop.html">Shop</a>
-          <a href="seller.html">Seller Dashboard</a>
-          <a href="chat.html">Chat</a>
-          <a href="login.html" data-action="logout">Logout</a>
+            <a href="index.html">Home</a>
+            <a href="shop.html">Shop</a>
+            <a href="seller.html">Seller Dashboard</a>
+            <a href="chat.html">Chat</a>
+            <a href="login.html" data-action="logout">Logout</a>
         </nav>
-      </header>
+    </header>
 
-      <section class="card">
-        <div id="cart-summary"></div>
+    <section class="card">
+        <h2>Order summary</h2>
+        <div id="cart-summary">
+            <!-- Populated by app.js. Sample structure below for reference / fallback. -->
+            <div class="summary-row"><span>Subtotal (3 items)</span><span class="value">K 1,130</span></div>
+            <div class="summary-row"><span>Delivery estimate</span><span class="value">K 45</span></div>
+            <div class="summary-row total"><span>Total</span><span class="value">K 1,175</span></div>
+
+            <div class="promo-row">
+                <input type="text" placeholder="Promo code" aria-label="Promo code" />
+                <button class="btn-outline" type="button">Apply</button>
+            </div>
+
+            <button class="btn-primary" type="button">Proceed to checkout</button>
+            <p class="secure-note">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="2.5" y="5.5" width="8" height="6" rx="1.2" stroke="currentColor" stroke-width="1.2"/><path d="M4.3 5.5V4a2.2 2.2 0 0 1 4.4 0v1.5" stroke="currentColor" stroke-width="1.2"/></svg>
+                Secure checkout
+            </p>
+        </div>
         <div id="cart-status" class="status-message" aria-live="polite"></div>
-      </section>
+    </section>
 
-      <section class="card" style="margin-top: 1.5rem;">
+    <section class="card" style="margin-top: 1.5rem;">
         <h2>Your items</h2>
-        <div id="cart-items" class="grid" style="margin-top: 1rem;"></div>
-      </section>
+        <div id="cart-items" class="grid" style="margin-top: 1rem;">
+            <!-- Populated by app.js. Sample items below for reference / fallback. -->
 
-      <footer class="footer-note">
+            <div class="cart-item" data-item-id="chitenge-bundle">
+                <div class="item-thumb" style="background: var(--color-primary-500);">CF</div>
+                <div>
+                    <div class="item-name">Chitenge fabric bundle</div>
+                    <div class="item-seller">Sold by Bwalya Textiles</div>
+                    <div class="item-price-each">K 280 each</div>
+                </div>
+                <div class="qty-control">
+                    <button class="qty-btn" type="button" aria-label="Decrease quantity">−</button>
+                    <span class="qty-value">2</span>
+                    <button class="qty-btn" type="button" aria-label="Increase quantity">+</button>
+                </div>
+                <div class="item-right">
+                    <span class="item-total">K 560</span>
+                    <button class="remove-btn" type="button">
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2.5 3.5h8M5 3.5V2.3a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v1.2M3.5 3.5v7a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        Remove
+                    </button>
+                </div>
+            </div>
+
+            <div class="cart-item" data-item-id="solar-lantern">
+                <div class="item-thumb" style="background: var(--color-accent-500);">SL</div>
+                <div>
+                    <div class="item-name">Solar lantern, 10W</div>
+                    <div class="item-seller">Sold by SunPower ZM</div>
+                    <div class="item-price-each">K 610 each</div>
+                </div>
+                <div class="qty-control">
+                    <button class="qty-btn" type="button" aria-label="Decrease quantity">−</button>
+                    <span class="qty-value">1</span>
+                    <button class="qty-btn" type="button" aria-label="Increase quantity">+</button>
+                </div>
+                <div class="item-right">
+                    <span class="item-total">K 610</span>
+                    <button class="remove-btn" type="button">
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2.5 3.5h8M5 3.5V2.3a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v1.2M3.5 3.5v7a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        Remove
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <footer class="footer-note">
         Adjust quantities and pickup details before placing your order.
-      </footer>
-    </div>
-    <script src="app.js"></script>
-  </body>
+    </footer>
+</div>
+
+<script>
+    // Quantity stepper interactions for the sample/fallback markup above.
+    // If app.js re-renders #cart-items and #cart-summary from real data,
+    // re-run this wiring (or replicate it) after that render completes,
+    // since these listeners are bound to the elements present at load time.
+    document.querySelectorAll(".cart-item").forEach((item) => {
+        const [decreaseBtn, increaseBtn] = item.querySelectorAll(".qty-btn");
+        const qtyEl = item.querySelector(".qty-value");
+        const totalEl = item.querySelector(".item-total");
+        const unitPrice = parseInt(item.querySelector(".item-price-each").textContent.replace(/\D/g, ""), 10);
+
+        function updateTotal() {
+            const qty = parseInt(qtyEl.textContent, 10);
+            totalEl.textContent = "K " + (qty * unitPrice).toLocaleString();
+        }
+
+        increaseBtn.addEventListener("click", () => {
+            qtyEl.textContent = parseInt(qtyEl.textContent, 10) + 1;
+            updateTotal();
+        });
+
+        decreaseBtn.addEventListener("click", () => {
+            const current = parseInt(qtyEl.textContent, 10);
+            if (current > 1) {
+                qtyEl.textContent = current - 1;
+                updateTotal();
+            }
+        });
+
+        item.querySelector(".remove-btn").addEventListener("click", () => {
+            item.remove();
+        });
+    });
+</script>
+<script src="app.js"></script>
+
+</body>
 </html>
