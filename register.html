@@ -1,61 +1,336 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Register — Zambian Marketplace</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div class="container">
-      <header class="page-header">
-        <div>
-            <div class="brand">
-              <a href="index.html"><img src="assets/logo.png" class="logo-img" alt="Zambian Marketplace" /></a>
-              <h1 class="page-title">Register</h1>
-              <p class="page-description">Create an account to start buying, selling, or pre-ordering.</p>
-            </div>
-        </div>
-        <nav class="header-nav">
-          <a href="index.html">Home</a>
-          <a href="shop.html">Shop</a>
-        </nav>
-      </header>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-      <section class="card" style="max-width: 620px; margin: 0 auto;">
-        <form id="register-form" class="grid grid-2">
-          <div class="input-group">
-            <label for="full-name">Full name</label>
-            <input id="full-name" type="text" placeholder="Your name" required />
-          </div>
-          <div class="input-group">
-            <label for="email">Email address</label>
-            <input id="email" type="email" placeholder="you@example.com" required />
-          </div>
-          <div class="input-group">
-            <label for="password">Password</label>
-            <input id="password" type="password" placeholder="Choose a password" required />
-          </div>
-          <div class="input-group">
-            <label for="role">Account type</label>
-            <select id="role">
-              <option value="CUSTOMER">Customer</option>
-              <option value="SELLER">Seller</option>
-            </select>
-          </div>
-          <div class="input-group" style="grid-column: span 2;">
-            <label for="phone">Phone number</label>
-            <input id="phone" type="tel" placeholder="+260 97 123 4567" />
-          </div>
-          <div id="form-status" class="status-message" style="grid-column: span 2;" aria-live="polite"></div>
-          <button type="submit">Create account</button>
-        </form>
-      </section>
+<title>Register | Zambian Marketplace</title>
 
-      <footer class="footer-note">
-        Register as a customer or seller and start using the marketplace today.
-      </footer>
-    </div>
-    <script src="app.js"></script>
-  </body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background:linear-gradient(135deg,#006400,#0b8f3d);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:40px 20px;
+}
+
+.container{
+    width:100%;
+    max-width:1100px;
+}
+
+.register-card{
+    background:#fff;
+    border-radius:20px;
+    overflow:hidden;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    box-shadow:0 20px 50px rgba(0,0,0,.2);
+}
+
+.left-side{
+    background:linear-gradient(rgba(0,100,0,.9),rgba(0,90,0,.9)),
+    url("assets/market.jpg") center/cover;
+    color:white;
+    padding:60px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+
+.logo{
+    width:80px;
+    margin-bottom:20px;
+}
+
+.left-side h1{
+    font-size:2.3rem;
+    margin-bottom:15px;
+}
+
+.left-side p{
+    line-height:1.7;
+    opacity:.9;
+}
+
+.right-side{
+    padding:50px;
+}
+
+.right-side h2{
+    margin-bottom:10px;
+    color:#222;
+}
+
+.subtitle{
+    color:#777;
+    margin-bottom:30px;
+}
+
+form{
+    display:grid;
+    gap:20px;
+}
+
+.row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+}
+
+.input-group{
+    display:flex;
+    flex-direction:column;
+}
+
+label{
+    margin-bottom:7px;
+    font-size:.92rem;
+    font-weight:500;
+    color:#333;
+}
+
+input,
+select{
+    padding:14px;
+    border:1px solid #ddd;
+    border-radius:10px;
+    font-size:15px;
+    transition:.3s;
+}
+
+input:focus,
+select:focus{
+    outline:none;
+    border-color:#0b8f3d;
+    box-shadow:0 0 0 4px rgba(11,143,61,.15);
+}
+
+.checkbox{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    font-size:14px;
+    color:#555;
+}
+
+.checkbox input{
+    margin-top:4px;
+}
+
+button{
+    background:#006400;
+    color:white;
+    border:none;
+    padding:15px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:16px;
+    font-weight:600;
+    transition:.3s;
+}
+
+button:hover{
+    background:#0b8f3d;
+    transform:translateY(-2px);
+}
+
+.status-message{
+    min-height:20px;
+    font-size:14px;
+    color:#006400;
+}
+
+.login-link{
+    text-align:center;
+    margin-top:20px;
+    color:#666;
+}
+
+.login-link a{
+    color:#006400;
+    font-weight:600;
+    text-decoration:none;
+}
+
+.login-link a:hover{
+    text-decoration:underline;
+}
+
+.footer{
+    text-align:center;
+    color:white;
+    margin-top:25px;
+    font-size:14px;
+}
+
+@media(max-width:850px){
+
+.register-card{
+    grid-template-columns:1fr;
+}
+
+.left-side{
+    text-align:center;
+    padding:40px;
+}
+
+.row{
+    grid-template-columns:1fr;
+}
+
+.right-side{
+    padding:35px;
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="register-card">
+
+<div class="left-side">
+
+<img src="assets/logo.png" class="logo" alt="Logo">
+
+<h1>Zambian Marketplace</h1>
+
+<p>
+Join Zambia's trusted online marketplace where buyers and sellers connect,
+discover amazing products, and grow local businesses.
+</p>
+
+</div>
+
+<div class="right-side">
+
+<h2>Create Your Account</h2>
+
+<p class="subtitle">
+Register as a Customer or Seller to start buying and selling.
+</p>
+
+<form id="register-form">
+
+<div class="row">
+
+<div class="input-group">
+<label>Full Name</label>
+<input
+type="text"
+id="full-name"
+placeholder="Enter your full name"
+autocomplete="name"
+required>
+</div>
+
+<div class="input-group">
+<label>Email Address</label>
+<input
+type="email"
+id="email"
+placeholder="example@email.com"
+autocomplete="email"
+required>
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="input-group">
+<label>Password</label>
+<input
+type="password"
+id="password"
+placeholder="Create password"
+autocomplete="new-password"
+required>
+</div>
+
+<div class="input-group">
+<label>Confirm Password</label>
+<input
+type="password"
+id="confirm-password"
+placeholder="Confirm password"
+required>
+</div>
+
+</div>
+
+<div class="row">
+
+<div class="input-group">
+<label>Phone Number</label>
+<input
+type="tel"
+id="phone"
+placeholder="+260 97 123 4567"
+autocomplete="tel">
+</div>
+
+<div class="input-group">
+<label>Account Type</label>
+<select id="role">
+<option value="CUSTOMER">Customer</option>
+<option value="SELLER">Seller</option>
+</select>
+</div>
+
+</div>
+
+<label class="checkbox">
+<input type="checkbox" required>
+<span>
+I agree to the Terms of Service and Privacy Policy.
+</span>
+</label>
+
+<div id="form-status" class="status-message"></div>
+
+<button type="submit">
+Create Account
+</button>
+
+</form>
+
+<div class="login-link">
+Already have an account?
+<a href="login.html">Login here</a>
+</div>
+
+</div>
+
+</div>
+
+<div class="footer">
+© 2026 Zambian Marketplace. All Rights Reserved.
+</div>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
 </html>
