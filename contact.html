@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Contact Us | Zambian Marketplace</title>
+<meta name="description" content="Get in touch with the Zambian Marketplace team." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+    --color-primary-900:#0B3D24; --color-primary-700:#145C36; --color-primary-500:#1F7A4D; --color-primary-100:#E5F0EA;
+    --color-accent-500:#C97A2B; --color-accent-600:#B06A22; --color-accent-100:#F6E9DA;
+    --color-blue-500:#2E6E9E; --color-blue-100:#E4EEF5;
+    --color-bg:#FAF9F5; --color-surface:#FFFFFF;
+    --color-ink-900:#1B2420; --color-ink-600:#55625A; --color-ink-400:#8A968E;
+    --color-border:#E3E4DE; --color-danger:#B3402B; --color-danger-100:#F7E7E3;
+    --font-display:'Fraunces',Georgia,serif; --font-body:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    --radius-sm:8px; --radius-md:12px; --radius-lg:18px;
+    --shadow-card:0 1px 2px rgba(17,24,20,.04),0 10px 28px rgba(17,24,20,.06);
+    --transition:160ms ease;
+}
+*{ margin:0; padding:0; box-sizing:border-box; }
+body{ font-family:var(--font-body); background:var(--color-bg); color:var(--color-ink-900); line-height:1.6; }
+a{ color:inherit; }
+.wrap{ max-width:1120px; margin:0 auto; padding:0 24px; }
+
+/* ---------- Site header (shared) ---------- */
+.site-header{ background:var(--color-surface); border-bottom:1px solid var(--color-border); position:sticky; top:0; z-index:20; }
+.nav-inner{ max-width:1120px; margin:0 auto; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; gap:24px; }
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; flex-shrink:0; }
+.logo-img{ width:36px; height:36px; border-radius:9px; background:var(--color-primary-900); object-fit:contain; padding:5px; }
+.brand span{ font-family:var(--font-display); font-weight:600; font-size:1.02rem; color:var(--color-ink-900); }
+.main-nav{ display:flex; gap:26px; }
+.main-nav a{ font-size:0.9rem; font-weight:500; color:var(--color-ink-600); text-decoration:none; transition:color var(--transition); }
+.main-nav a:hover, .main-nav a.active{ color:var(--color-primary-700); }
+.nav-actions{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.btn-ghost{ font-size:0.86rem; font-weight:600; color:var(--color-ink-900); text-decoration:none; padding:9px 14px; border-radius:var(--radius-sm); transition:background var(--transition); }
+.btn-ghost:hover{ background:var(--color-bg); }
+.btn-solid{ font-size:0.86rem; font-weight:600; color:#fff; background:var(--color-primary-900); text-decoration:none; padding:9px 16px; border-radius:var(--radius-sm); transition:background var(--transition); border:none; cursor:pointer; }
+.btn-solid:hover{ background:var(--color-primary-700); }
+.menu-toggle{ display:none; background:none; border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:8px; cursor:pointer; }
+.mobile-nav{ display:none; flex-direction:column; padding:10px 24px 18px; border-top:1px solid var(--color-border); }
+.mobile-nav a{ padding:10px 0; font-size:0.92rem; font-weight:500; color:var(--color-ink-700); text-decoration:none; border-bottom:1px solid var(--color-border); }
+.mobile-nav.open{ display:flex; }
+@media (max-width:900px){ .main-nav, .nav-actions{ display:none; } .menu-toggle{ display:flex; align-items:center; justify-content:center; } }
+
+/* ---------- Hero ---------- */
+.hero{ padding:56px 0 12px; text-align:center; }
+.hero .eyebrow{ font-size:0.8rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--color-accent-600); margin-bottom:12px; }
+.hero h1{ font-family:var(--font-display); font-weight:600; font-size:2.1rem; margin-bottom:12px; }
+.hero p{ color:var(--color-ink-600); max-width:52ch; margin:0 auto; }
+
+/* ---------- Contact method cards ---------- */
+.method-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin:36px 0 48px; }
+.method-card{
+    background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md);
+    box-shadow:var(--shadow-card); padding:22px; text-align:center; text-decoration:none; color:inherit;
+    transition:border-color var(--transition);
+}
+.method-card:hover{ border-color:var(--color-primary-500); }
+.method-icon{ width:42px; height:42px; border-radius:11px; background:var(--color-primary-100); color:var(--color-primary-700); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; }
+.method-card h3{ font-size:0.92rem; font-weight:600; margin-bottom:5px; }
+.method-card p{ font-size:0.82rem; color:var(--color-ink-600); }
+
+/* ---------- Contact layout ---------- */
+.contact-layout{ display:grid; grid-template-columns:1.3fr 1fr; gap:24px; margin-bottom:60px; align-items:start; }
+
+.card{
+    background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-card); padding:32px;
+}
+.card h2{ font-family:var(--font-display); font-weight:600; font-size:1.2rem; margin-bottom:6px; }
+.card .card-sub{ font-size:0.88rem; color:var(--color-ink-600); margin-bottom:24px; }
+
+form{ display:grid; gap:16px; }
+.row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.input-group{ display:flex; flex-direction:column; }
+label{ font-size:0.85rem; font-weight:500; margin-bottom:6px; }
+input, select, textarea{
+    padding:12px 14px; border:1px solid var(--color-border); border-radius:var(--radius-sm);
+    font-size:0.92rem; font-family:var(--font-body); background:var(--color-bg); resize:vertical;
+    transition:border-color var(--transition), box-shadow var(--transition);
+}
+textarea{ min-height:120px; }
+input:focus, select:focus, textarea:focus{
+    outline:none; border-color:var(--color-primary-500); box-shadow:0 0 0 3px rgba(31,122,77,.14); background:var(--color-surface);
+}
+
+.btn-primary{
+    background:var(--color-primary-900); color:#fff; border:none; padding:13px; border-radius:var(--radius-sm);
+    font-size:0.94rem; font-weight:600; font-family:var(--font-body); cursor:pointer; transition:background var(--transition);
+}
+.btn-primary:hover{ background:var(--color-primary-700); }
+
+.status-message{ min-height:18px; font-size:0.85rem; color:var(--color-primary-700); }
+.status-message.is-error{ color:var(--color-danger); }
+
+/* Office info card */
+.office-row{ display:flex; gap:12px; padding:14px 0; border-top:1px solid var(--color-border); }
+.office-row:first-of-type{ border-top:none; padding-top:0; }
+.office-icon{ width:34px; height:34px; border-radius:9px; background:var(--color-primary-100); color:var(--color-primary-700); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.office-row h4{ font-size:0.86rem; font-weight:600; margin-bottom:2px; }
+.office-row p{ font-size:0.82rem; color:var(--color-ink-600); }
+
+.map-visual{
+    margin-top:20px; aspect-ratio:16/10; border-radius:var(--radius-md);
+    background:linear-gradient(135deg, var(--color-primary-100), var(--color-accent-100));
+    display:flex; align-items:center; justify-content:center; color:var(--color-primary-700);
+    font-size:0.84rem; font-weight:600; text-align:center; padding:16px;
+}
+
+/* ---------- Footer (shared) ---------- */
+.site-footer{ background:var(--color-primary-900); color:rgba(243,245,241,.85); padding:52px 0 26px; }
+.footer-grid{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:32px; margin-bottom:36px; }
+.footer-brand p{ font-size:0.86rem; color:rgba(243,245,241,.6); margin-top:12px; max-width:32ch; }
+.footer-col h4{ font-size:0.78rem; text-transform:uppercase; letter-spacing:0.05em; color:rgba(243,245,241,.5); margin-bottom:14px; }
+.footer-col a{ display:block; font-size:0.87rem; color:rgba(243,245,241,.8); text-decoration:none; margin-bottom:10px; }
+.footer-col a:hover{ color:#fff; }
+.footer-bottom{ border-top:1px solid rgba(255,255,255,.12); padding-top:20px; font-size:0.8rem; color:rgba(243,245,241,.5); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+
+@media (max-width:900px){
+    .method-grid{ grid-template-columns:1fr 1fr; }
+    .contact-layout{ grid-template-columns:1fr; }
+    .footer-grid{ grid-template-columns:1fr 1fr; }
+}
+@media (max-width:560px){
+    .hero h1{ font-size:1.7rem; }
+    .method-grid{ grid-template-columns:1fr; }
+    .row{ grid-template-columns:1fr; }
+    .card{ padding:24px 20px; }
+}
+@media (prefers-reduced-motion:reduce){ *{ transition:none !important; } }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+    <div class="nav-inner">
+        <a class="brand" href="index.html">
+            <img src="assets/logo.png" class="logo-img" alt="Zambian Marketplace" />
+            <span>Zambian Marketplace</span>
+        </a>
+        <nav class="main-nav">
+            <a href="index.html">Home</a>
+            <a href="shop.html">Shop</a>
+            <a href="about.html">About</a>
+            <a href="careers.html">Careers</a>
+            <a href="blog.html">Blog</a>
+            <a href="help-centre.html">Help Centre</a>
+            <a href="contact.html" class="active">Contact</a>
+        </nav>
+        <div class="nav-actions">
+            <a href="login.html" class="btn-ghost">Log in</a>
+            <a href="register.html" class="btn-solid">Sign up</a>
+        </div>
+        <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+    </div>
+    <nav class="mobile-nav" id="mobile-nav">
+        <a href="index.html">Home</a>
+        <a href="shop.html">Shop</a>
+        <a href="about.html">About</a>
+        <a href="careers.html">Careers</a>
+        <a href="blog.html">Blog</a>
+        <a href="help-centre.html">Help Centre</a>
+        <a href="contact.html">Contact</a>
+        <a href="login.html">Log in</a>
+        <a href="register.html">Sign up</a>
+    </nav>
+</header>
+
+<div class="wrap">
+    <section class="hero">
+        <p class="eyebrow">Contact us</p>
+        <h1>Get in touch</h1>
+        <p>Questions about an order, a seller account, or anything else — we're happy to help.</p>
+    </section>
+
+    <div class="method-grid">
+        <a class="method-card" href="mailto:support@zambianmarketplace.com">
+            <div class="method-icon"><svg width="19" height="19" viewBox="0 0 19 19" fill="none"><rect x="2" y="4" width="15" height="11" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M3 5.5l6.5 5 6.5-5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h3>Email</h3>
+            <p>support@zambianmarketplace.com</p>
+        </a>
+        <a class="method-card" href="tel:+260211234567">
+            <div class="method-icon"><svg width="19" height="19" viewBox="0 0 19 19" fill="none"><path d="M4 3h3l1.5 4-2 1.5a10 10 0 0 0 4.5 4.5l1.5-2 4 1.5v3a1.5 1.5 0 0 1-1.6 1.5C9.2 16.6 3.4 10.8 2.5 4.6A1.5 1.5 0 0 1 4 3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></div>
+            <h3>Phone</h3>
+            <p>+260 211 234 567</p>
+        </a>
+        <a class="method-card" href="https://wa.me/260971234567" target="_blank" rel="noopener">
+            <div class="method-icon"><svg width="19" height="19" viewBox="0 0 19 19" fill="none"><path d="M2 17l1.2-3.6A7 7 0 1 1 6.6 16L2 17Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></div>
+            <h3>WhatsApp</h3>
+            <p>+260 97 123 4567</p>
+        </a>
+        <div class="method-card">
+            <div class="method-icon"><svg width="19" height="19" viewBox="0 0 19 19" fill="none"><path d="M9.5 17s6.5-5.9 6.5-10.5A6.5 6.5 0 0 0 3 6.5C3 11.1 9.5 17 9.5 17Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><circle cx="9.5" cy="6.5" r="2" stroke="currentColor" stroke-width="1.3"/></svg></div>
+            <h3>Office</h3>
+            <p>Cairo Road, Lusaka</p>
+        </div>
+    </div>
+
+    <div class="contact-layout">
+        <div class="card">
+            <h2>Send us a message</h2>
+            <p class="card-sub">We usually reply within a few business hours.</p>
+
+            <form id="contact-form" novalidate>
+                <div class="row">
+                    <div class="input-group">
+                        <label for="name">Full name</label>
+                        <input type="text" id="name" placeholder="Your name" autocomplete="name" required />
+                    </div>
+                    <div class="input-group">
+                        <label for="email">Email address</label>
+                        <input type="email" id="email" placeholder="you@example.com" autocomplete="email" required />
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="topic">What's this about?</label>
+                    <select id="topic">
+                        <option>Order or delivery issue</option>
+                        <option>Payment or refund</option>
+                        <option>Selling on the marketplace</option>
+                        <option>Account or login help</option>
+                        <option>Something else</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" placeholder="Tell us a bit more..." required></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary">Send message</button>
+                <div id="contact-status" class="status-message" aria-live="polite"></div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Our office</h2>
+            <p class="card-sub">Visit us during working hours.</p>
+
+            <div class="office-row">
+                <div class="office-icon"><svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M8.5 15s5-4.5 5-8.5a5 5 0 0 0-10 0c0 4 5 8.5 5 8.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></div>
+                <div><h4>Address</h4><p>3rd Floor, Society House, Cairo Road, Lusaka, Zambia</p></div>
+            </div>
+            <div class="office-row">
+                <div class="office-icon"><svg width="17" height="17" viewBox="0 0 17 17" fill="none"><circle cx="8.5" cy="8.5" r="6.5" stroke="currentColor" stroke-width="1.4"/><path d="M8.5 5v3.5l2.3 1.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></div>
+                <div><h4>Hours</h4><p>Mon – Fri, 08:00 – 17:00 CAT</p></div>
+            </div>
+            <div class="office-row">
+                <div class="office-icon"><svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h10A1.5 1.5 0 0 1 15 4.5v6A1.5 1.5 0 0 1 13.5 12H6l-3 2.5V12h-.5A1.5 1.5 0 0 1 1 10.5v-6Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></div>
+                <div><h4>Prefer self-service?</h4><p>Check our <a href="help-centre.html" style="color:var(--color-primary-700); font-weight:600;">Help Centre</a> for quick answers.</p></div>
+            </div>
+
+            <div class="map-visual">Map placeholder<br/>Cairo Road, Lusaka</div>
+        </div>
+    </div>
+</div>
+
+<footer class="site-footer">
+    <div class="wrap">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <a class="brand" href="index.html" style="color:#fff;">
+                    <img src="assets/logo.png" class="logo-img" alt="Zambian Marketplace" />
+                    <span style="color:#fff;">Zambian Marketplace</span>
+                </a>
+                <p>Zambia's trusted online marketplace for local buyers and sellers.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Company</h4>
+                <a href="about.html">About</a>
+                <a href="careers.html">Careers</a>
+                <a href="blog.html">Blog</a>
+            </div>
+            <div class="footer-col">
+                <h4>Support</h4>
+                <a href="help-centre.html">Help Centre</a>
+                <a href="contact.html">Contact Us</a>
+                <a href="terms.html">Terms of Service</a>
+            </div>
+            <div class="footer-col">
+                <h4>For sellers</h4>
+                <a href="register.html">Start selling</a>
+                <a href="seller.html">Seller Dashboard</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>&copy; 2026 Zambian Marketplace. All rights reserved.</span>
+            <span>Made for local trade, everywhere in Zambia.</span>
+        </div>
+    </div>
+</footer>
+
+<script>
+    document.getElementById("menu-toggle").addEventListener("click", () => {
+        document.getElementById("mobile-nav").classList.toggle("open");
+    });
+
+    const form = document.getElementById("contact-form");
+    const statusEl = document.getElementById("contact-status");
+
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name = document.getElementById("name").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const message = document.getElementById("message").value.trim();
+        const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+        if (!name || !emailValid || !message) {
+            statusEl.textContent = "Please fill in all fields with a valid email address.";
+            statusEl.classList.add("is-error");
+            return;
+        }
+
+        statusEl.classList.remove("is-error");
+        statusEl.textContent = "Thanks — your message has been sent. We'll get back to you soon.";
+        form.reset();
+        // Actual submission logic (API call) belongs in app.js
+    });
+</script>
+<script src="app.js"></script>
+</body>
+</html>
