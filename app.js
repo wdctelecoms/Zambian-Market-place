@@ -1,3 +1,10 @@
+// Safe to expose in client-side code: this key only allows what Supabase's
+// Auth API is designed for (sign up/in as the person using the page), not
+// admin access to your project.
+const SUPABASE_URL = "https://iqurvvxmfjfvlkvfsanq.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_0F_NAcjt5hB7cqq8t6y2qA_tFWGv8Oi";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const AUTH_STORAGE_KEY = "zmarket-auth";
 
 const authState = loadAuthState();
@@ -35,6 +42,20 @@ function getAccessToken() {
   return authState.tokens?.accessToken || "";
 }
 
+// Supabase refreshes the access token in the background on its own timer;
+// mirror that into our storage so getAccessToken() always has a live token
+// without every page needing to know about the refresh.
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_OUT" || !session) {
+    if (authState.user) clearAuthState();
+    return;
+  }
+  if (authState.user) {
+    authState.tokens = { accessToken: session.access_token };
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authState));
+  }
+});
+
 function formatCurrency(value) {
   return new Intl.NumberFormat("en-ZM", {
     style: "currency",
@@ -56,18 +77,30 @@ function redirectAfterAuth(user) {
 }
 
 async function requestJson(path, options = {}) {
-  const headers = new Headers(options.headers || {});
-  if (!(options.body instanceof FormData)) {
-    headers.set("Content-Type", "application/json");
-  }
-  if (getAccessToken()) {
-    headers.set("Authorization", `Bearer ${getAccessToken()}`);
-  }
+  const doFetch = () => {
+    const headers = new Headers(options.headers || {});
+    if (!(options.body instanceof FormData)) {
+      headers.set("Content-Type", "application/json");
+    }
+    if (getAccessToken()) {
+      headers.set("Authorization", `Bearer ${getAccessToken()}`);
+    }
+    return fetch(`/api${path}`, { ...options, headers });
+  };
 
-  const response = await fetch(`/api${path}`, {
-    ...options,
-    headers,
-  });
+  let response = await doFetch();
+
+  // The cached access token can go stale if the tab sat idle past its ~1hr
+  // expiry. Supabase keeps a refresh token in its own storage regardless,
+  // so try once to get a fresh access token before giving up.
+  if (response.status === 401 && authState.user) {
+    const { data } = await supabaseClient.auth.getSession();
+    if (data.session) {
+      authState.tokens = { accessToken: data.session.access_token };
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authState));
+      response = await doFetch();
+    }
+  }
 
   const contentType = response.headers.get("content-type") || "";
   const payload = contentType.includes("application/json")
@@ -86,6 +119,7 @@ function bindLogoutLinks() {
   document.querySelectorAll("[data-action='logout']").forEach((link) => {
     link.addEventListener("click", (event) => {
       event.preventDefault();
+      supabaseClient.auth.signOut();
       clearAuthState();
       window.location.href = "login.html";
     });
@@ -103,13 +137,16 @@ function bindLoginForm() {
 
     try {
       setStatus("form-status", "Signing you in...", "info");
-      const data = await requestJson("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+
+      const { user } = await requestJson("/auth/me", {
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
       });
-      persistAuthState(data.user, data.tokens);
+
+      persistAuthState(user, { accessToken: data.session.access_token });
       setStatus("form-status", "Login successful. Redirecting...", "success");
-      setTimeout(() => redirectAfterAuth(data.user), 350);
+      setTimeout(() => redirectAfterAuth(user), 350);
     } catch (error) {
       setStatus("form-status", error.message || "Unable to login", "error");
     }
@@ -130,13 +167,27 @@ function bindRegisterForm() {
 
     try {
       setStatus("form-status", "Creating your account...", "info");
-      const data = await requestJson("/auth/register", {
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) throw error;
+
+      if (!data.session) {
+        setStatus(
+          "form-status",
+          "Account created. Check your email to confirm before logging in.",
+          "success",
+        );
+        return;
+      }
+
+      const { user } = await requestJson("/auth/sync", {
         method: "POST",
-        body: JSON.stringify({ fullName, email, password, role, phone }),
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+        body: JSON.stringify({ fullName, role, phone }),
       });
-      persistAuthState(data.user, data.tokens);
+
+      persistAuthState(user, { accessToken: data.session.access_token });
       setStatus("form-status", "Account created. Redirecting...", "success");
-      setTimeout(() => redirectAfterAuth(data.user), 350);
+      setTimeout(() => redirectAfterAuth(user), 350);
     } catch (error) {
       setStatus("form-status", error.message || "Unable to register", "error");
     }

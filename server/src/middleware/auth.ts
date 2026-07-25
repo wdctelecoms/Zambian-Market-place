@@ -1,14 +1,18 @@
 import type { Request, Response, NextFunction } from "express";
-import { verifyAccessToken } from "../utils/auth.js";
+import { verifySupabaseToken } from "../config/supabase.js";
+import { prisma } from "../config/prisma.js";
 
 interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     role: string;
+    email: string;
   };
 }
 
-export const authenticate = (
+// Verifies the Supabase-issued access token, then loads our own profile row
+// (for the app-specific role/email) and attaches it as req.user.
+export const authenticate = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction,
@@ -23,8 +27,18 @@ export const authenticate = (
   const token = authHeader.split(" ")[1];
 
   try {
-    const payload = verifyAccessToken(token);
-    req.user = { id: payload.sub, role: payload.role };
+    const payload = await verifySupabaseToken(token);
+    const user = await prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { id: true, role: true, email: true },
+    });
+
+    if (!user) {
+      res.status(401).json({ message: "Profile not set up yet. Call /api/auth/sync first." });
+      return;
+    }
+
+    req.user = user;
     next();
   } catch {
     res.status(401).json({ message: "Invalid or expired token" });

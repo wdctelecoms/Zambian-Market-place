@@ -50,16 +50,14 @@ enum PreOrderStatus {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  fullName      String
-  email         String   @unique
-  password      String
-  role          Role     @default(CUSTOMER)
-  emailVerified Boolean  @default(false)
-  otp           String?
-  refreshToken  String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  // Same UUID as the row Supabase Auth creates in auth.users - set explicitly
+  // on insert, never generated here.
+  id        String   @id @db.Uuid
+  fullName  String
+  email     String   @unique
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   seller           Seller?
   customer         Customer?
@@ -70,7 +68,7 @@ model User {
 
 model Seller {
   id         String   @id @default(uuid())
-  userId     String   @unique
+  userId     String   @unique @db.Uuid
   storeName  String
   phone      String?
   bio        String?
@@ -85,7 +83,7 @@ model Seller {
 
 model Customer {
   id        String   @id @default(uuid())
-  userId    String   @unique
+  userId    String   @unique @db.Uuid
   phone     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -200,8 +198,8 @@ model Receipt {
 
 model Message {
   id            String      @id @default(uuid())
-  senderId      String
-  receiverId    String
+  senderId      String   @db.Uuid
+  receiverId    String   @db.Uuid
   type          MessageType @default(TEXT)
   content       String?
   mediaUrl      String?
@@ -218,7 +216,7 @@ model Message {
 
 model Notification {
   id        String   @id @default(uuid())
-  userId    String
+  userId    String   @db.Uuid
   title     String
   message   String
   isRead    Boolean  @default(false)

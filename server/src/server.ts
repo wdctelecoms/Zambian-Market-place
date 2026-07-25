@@ -1,7 +1,7 @@
 import app from "./app.js";
 import { createServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
-import { verifyAccessToken } from "./utils/auth.js";
+import { verifySupabaseToken } from "./config/supabase.js";
 import { prisma } from "./config/prisma.js";
 
 interface SocketUser {
@@ -18,24 +18,29 @@ const io = new SocketIOServer(httpServer, {
   },
 });
 
-const parseSocketToken = (token?: string) => {
+const parseSocketToken = async (token?: string) => {
   if (!token) return null;
   try {
-    return verifyAccessToken(token);
+    const payload = await verifySupabaseToken(token);
+    const user = await prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { id: true, role: true },
+    });
+    return user ? { userId: user.id, role: user.role } : null;
   } catch {
     return null;
   }
 };
 
-io.use((socket, next) => {
+io.use(async (socket, next) => {
   const token = socket.handshake.auth?.token as string | undefined;
-  const payload = parseSocketToken(token);
+  const user = await parseSocketToken(token);
 
-  if (!payload?.sub) {
+  if (!user) {
     return next(new Error("Authentication required"));
   }
 
-  socket.data.user = { userId: payload.sub, role: payload.role };
+  socket.data.user = user;
   next();
 });
 

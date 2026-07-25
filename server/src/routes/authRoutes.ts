@@ -1,22 +1,13 @@
 import { Router } from "express";
-import {
-  forgotPassword,
-  login,
-  refreshToken,
-  register,
-  resetPassword,
-  verifyEmail,
-  verifyOtp,
-} from "../controllers/authController.js";
+import { me, sync } from "../controllers/authController.js";
+import { authenticate } from "../middleware/auth.js";
 
 const router = Router();
 
-router.post("/register", register);
-router.post("/login", login);
-router.post("/refresh", refreshToken);
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
-router.post("/verify-otp", verifyOtp);
-router.post("/verify-email", verifyEmail);
+// No `authenticate` here on purpose - see the comment on `sync` in the
+// controller for why (a brand-new Supabase user has no profile row yet).
+router.post("/sync", sync);
+
+router.get("/me", authenticate, me);
 
 export default router;
