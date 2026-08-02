@@ -11,15 +11,38 @@ import messageRoutes from "./routes/messageRoutes.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const clientPath = path.resolve(__dirname, "../../client");
+const introPath = path.resolve(__dirname, "../../intro.html");
+const allowedOrigins = [process.env.CLIENT_URL, "http://127.0.0.1:5000", "http://localhost:5000"].filter(Boolean);
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(null, false);
+    },
+    credentials: true,
+  }),
+);
 app.use(express.json());
-app.use(express.static(clientPath));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(clientPath, { index: false }));
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(clientPath, "index.html"));
+  res.sendFile(introPath);
+});
+
+app.get("/intro.html", (req, res) => {
+  res.sendFile(introPath);
+});
+
+app.get("/index.html", (req, res) => {
+  res.sendFile(introPath);
 });
 
 app.use("/api/auth", authRoutes);

@@ -11,9 +11,12 @@ This project now connects the core marketplace pages to the backend API:
 
 ## Run locally
 
-1. Start the backend server:
-   - `cd server && npm install`
+1. Copy the example environment file and fill in your real Supabase/Postgres values:
+   - `cd server && cp .env.example .env`
+2. Install and start the backend server:
+   - `npm install`
    - `npm run dev`
-2. Serve the frontend:
-   - `cd .. && python3 -m http.server 8000`
-3. Open `http://127.0.0.1:8000/`
+3. Open the site from the same Express server that now serves the client assets:
+   - `http://127.0.0.1:5000/`
+
+> The frontend is statically served by the backend, so the browser, API routes, and Supabase-auth token flow all run on the same origin.

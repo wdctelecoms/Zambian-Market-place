@@ -42,6 +42,36 @@ function getAccessToken() {
   return authState.tokens?.accessToken || "";
 }
 
+function getReturnUrl() {
+  const raw = new URLSearchParams(window.location.search).get("returnUrl");
+  if (!raw) return "";
+
+  try {
+    const parsed = new URL(raw, window.location.origin);
+    const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html"]);
+    if (allowedPages.has(parsed.pathname.split("/").pop() || "")) {
+      return parsed.pathname.replace(/^\//, "");
+    }
+  } catch {
+    // Ignore malformed return URLs and fall back to the role-based redirect.
+  }
+
+  return "";
+}
+
+function redirectToLoginIfNeeded() {
+  const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html"]);
+  const currentPage = window.location.pathname.split("/").pop() || "index.html";
+
+  if (!protectedPages.has(currentPage) || isAuthenticated()) {
+    return false;
+  }
+
+  const returnUrl = encodeURIComponent(currentPage);
+  window.location.replace(`login.html?returnUrl=${returnUrl}`);
+  return true;
+}
+
 // Supabase refreshes the access token in the background on its own timer;
 // mirror that into our storage so getAccessToken() always has a live token
 // without every page needing to know about the refresh.
@@ -73,6 +103,12 @@ function setStatus(elementId, message, type = "info") {
 
 function redirectAfterAuth(user) {
   const role = user?.role;
+  const returnUrl = getReturnUrl();
+  if (returnUrl) {
+    window.location.href = returnUrl;
+    return;
+  }
+
   window.location.href = role === "SELLER" ? "seller.html" : "shop.html";
 }
 
@@ -847,6 +883,10 @@ async function bindChatPage() {
 }
 
 function initializePage() {
+  if (redirectToLoginIfNeeded()) {
+    return;
+  }
+
   bindLogoutLinks();
   bindLoginForm();
   bindRegisterForm();

@@ -10,11 +10,20 @@ interface SocketUser {
 }
 
 const PORT = process.env.PORT || 5000;
+const allowedSocketOrigins = [process.env.CLIENT_URL, "http://127.0.0.1:5000", "http://localhost:5000"].filter(Boolean);
 const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || "*",
+    origin: (origin, callback) => {
+      if (!origin || allowedSocketOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(null, false);
+    },
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
