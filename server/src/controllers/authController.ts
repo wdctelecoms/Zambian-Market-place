@@ -35,11 +35,28 @@ export const sync = async (req: Request, res: Response) => {
       return;
     }
 
-    const { fullName, role, phone, storeName } = req.body as {
+    const {
+      fullName,
+      role,
+      phone,
+      storeName,
+      street,
+      city,
+      province,
+      country,
+      postalCode,
+      paymentMethod,
+    } = req.body as {
       fullName?: string;
       role?: "CUSTOMER" | "SELLER";
       phone?: string;
       storeName?: string;
+      street?: string;
+      city?: string;
+      province?: string;
+      country?: string;
+      postalCode?: string;
+      paymentMethod?: "CARD" | "MOBILE_MONEY" | "CASH" | "BANK_TRANSFER";
     };
 
     if (!fullName) {
@@ -55,10 +72,46 @@ export const sync = async (req: Request, res: Response) => {
         role: role === "SELLER" ? "SELLER" : "CUSTOMER",
         ...(role === "SELLER"
           ? { seller: { create: { storeName: storeName || fullName, phone } } }
-          : { customer: { create: { phone, cart: { create: {} } } } }),
+          : {
+              customer: {
+                create: {
+                  phone,
+                  preferredPaymentMethod: paymentMethod,
+                  cart: { create: {} },
+                },
+              },
+            }),
       },
-      select: { id: true, fullName: true, email: true, role: true },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        role: true,
+        customer: {
+          select: {
+            id: true,
+            preferredPaymentMethod: true,
+          },
+        },
+      },
     });
+
+    if (role !== "SELLER" && street && city && province && country && postalCode) {
+      const customer = await prisma.customer.findUnique({ where: { userId: payload.sub } });
+      if (customer) {
+        await prisma.address.create({
+          data: {
+            customerId: customer.id,
+            street: street.trim(),
+            city: city.trim(),
+            province: province.trim(),
+            country: country.trim(),
+            postalCode: postalCode.trim(),
+            isDefault: true,
+          },
+        });
+      }
+    }
 
     res.status(201).json({ message: "Profile created", user });
   } catch (error) {

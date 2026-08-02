@@ -45,9 +45,38 @@
               <option value="SELLER">Seller</option>
             </select>
           </div>
-          <div class="input-group" style="grid-column: span 2;">
+          <div class="input-group">
             <label for="phone">Phone number</label>
             <input id="phone" type="tel" placeholder="+260 97 123 4567" />
+          </div>
+          <div class="input-group">
+            <label for="payment-method">Preferred payment method</label>
+            <select id="payment-method">
+              <option value="CARD">Card</option>
+              <option value="MOBILE_MONEY">Mobile money</option>
+              <option value="CASH">Cash</option>
+              <option value="BANK_TRANSFER">Bank transfer</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="street">Street address</label>
+            <input id="street" type="text" placeholder="Plot 123, Main Road" />
+          </div>
+          <div class="input-group">
+            <label for="city">City</label>
+            <input id="city" type="text" placeholder="Lusaka" />
+          </div>
+          <div class="input-group">
+            <label for="province">Province</label>
+            <input id="province" type="text" placeholder="Lusaka" />
+          </div>
+          <div class="input-group">
+            <label for="country">Country</label>
+            <input id="country" type="text" placeholder="Zambia" value="Zambia" />
+          </div>
+          <div class="input-group" style="grid-column: span 2;">
+            <label for="postal-code">Postal code</label>
+            <input id="postal-code" type="text" placeholder="10101" />
           </div>
           <div id="form-status" class="status-message" style="grid-column: span 2;" aria-live="polite"></div>
           <button type="submit">Create account</button>

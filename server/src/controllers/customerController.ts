@@ -61,7 +61,9 @@ export const getCustomerProfile = async (req: AuthenticatedRequest, res: Respons
         seller: false,
         customer: {
           select: {
+            id: true,
             phone: true,
+            preferredPaymentMethod: true,
             createdAt: true,
             updatedAt: true,
           },
@@ -86,13 +88,17 @@ export const updateCustomerProfile = async (req: AuthenticatedRequest, res: Resp
     const userId = ensureUserId(req, res);
     if (!userId) return;
 
-    const { fullName, phone } = req.body as { fullName?: string; phone?: string };
+    const { fullName, phone, preferredPaymentMethod } = req.body as {
+      fullName?: string;
+      phone?: string;
+      preferredPaymentMethod?: "CARD" | "MOBILE_MONEY" | "CASH" | "BANK_TRANSFER";
+    };
     const updates: Record<string, string | undefined> = {};
 
     if (fullName) updates.fullName = fullName.trim();
     if (phone) updates.phone = phone.trim();
 
-    if (!Object.keys(updates).length) {
+    if (!Object.keys(updates).length && typeof preferredPaymentMethod === "undefined") {
       res.status(400).json({ message: "No profile fields provided" });
       return;
     }
@@ -107,7 +113,14 @@ export const updateCustomerProfile = async (req: AuthenticatedRequest, res: Resp
       await prisma.customer.updateMany({ where: { userId }, data: { phone: phone.trim() } });
     }
 
-    res.json(user);
+    if (preferredPaymentMethod) {
+      await prisma.customer.updateMany({ where: { userId }, data: { preferredPaymentMethod } });
+    }
+
+    res.json({
+      ...user,
+      preferredPaymentMethod,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Unable to update customer profile" });

@@ -212,6 +212,12 @@ function bindRegisterForm() {
     const password = document.getElementById("password").value;
     const role = document.getElementById("role").value;
     const phone = document.getElementById("phone").value.trim();
+    const paymentMethod = document.getElementById("payment-method")?.value || "CARD";
+    const street = document.getElementById("street")?.value.trim() || "";
+    const city = document.getElementById("city")?.value.trim() || "";
+    const province = document.getElementById("province")?.value.trim() || "";
+    const country = document.getElementById("country")?.value.trim() || "Zambia";
+    const postalCode = document.getElementById("postal-code")?.value.trim() || "";
 
     try {
       setStatus("form-status", "Creating your account...", "info");
@@ -230,7 +236,17 @@ function bindRegisterForm() {
       const { user } = await requestJson("/auth/sync", {
         method: "POST",
         headers: { Authorization: `Bearer ${data.session.access_token}` },
-        body: JSON.stringify({ fullName, role, phone }),
+        body: JSON.stringify({
+          fullName,
+          role,
+          phone,
+          paymentMethod,
+          street,
+          city,
+          province,
+          country,
+          postalCode,
+        }),
       });
 
       persistAuthState(user, { accessToken: data.session.access_token });
@@ -429,6 +445,9 @@ async function bindSellerPage() {
 async function bindCartPage() {
   const summaryElement = document.getElementById("cart-summary");
   const itemsElement = document.getElementById("cart-items");
+  const addressList = document.getElementById("saved-addresses");
+  const addressForm = document.getElementById("address-form");
+  const paymentSelect = document.getElementById("checkout-payment-method");
   if (!summaryElement || !itemsElement) return;
 
   if (!isAuthenticated()) {
@@ -447,11 +466,35 @@ async function bindCartPage() {
 
   try {
     setStatus("cart-status", "Loading your cart...", "info");
-    const cart = await requestJson("/customer/cart");
+    const [cart, profile, addresses] = await Promise.all([
+      requestJson("/customer/cart"),
+      requestJson("/customer/profile"),
+      requestJson("/customer/addresses"),
+    ]);
     const activeItems = cart.activeItems || [];
     const subtotal = Number(cart.subtotal || 0);
     const deliveryFee = Number(cart.deliveryFee || 0);
     const total = Number(cart.total || 0);
+
+    if (paymentSelect) {
+      paymentSelect.value = profile.customer?.preferredPaymentMethod || paymentSelect.value || "CARD";
+    }
+
+    if (addressList) {
+      addressList.innerHTML = addresses.length
+        ? addresses
+            .map(
+              (address) => `
+                <div class="card">
+                  <p><strong>${address.street}</strong></p>
+                  <p class="text-muted">${address.city}, ${address.province}, ${address.country} • ${address.postalCode}</p>
+                  <p class="text-muted">${address.isDefault ? "Default delivery address" : "Saved address"}</p>
+                </div>
+              `,
+            )
+            .join("")
+        : '<div class="empty-state">No saved addresses yet.</div>';
+    }
 
     summaryElement.innerHTML = `
       <div class="grid grid-3">
@@ -495,6 +538,48 @@ async function bindCartPage() {
     setStatus("cart-status", "Cart ready.", "success");
   } catch (error) {
     setStatus("cart-status", error.message || "Unable to load cart", "error");
+  }
+
+  if (paymentSelect && paymentSelect.dataset.bound !== "true") {
+    paymentSelect.dataset.bound = "true";
+    paymentSelect.addEventListener("change", async () => {
+      try {
+        await requestJson("/customer/profile", {
+          method: "PATCH",
+          body: JSON.stringify({ preferredPaymentMethod: paymentSelect.value }),
+        });
+        setStatus("cart-status", "Preferred payment method saved.", "success");
+      } catch (error) {
+        setStatus("cart-status", error.message || "Unable to save payment method", "error");
+      }
+    });
+  }
+
+  if (addressForm && addressForm.dataset.bound !== "true") {
+    addressForm.dataset.bound = "true";
+    addressForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const payload = {
+        street: document.getElementById("delivery-street")?.value.trim(),
+        city: document.getElementById("delivery-city")?.value.trim(),
+        province: document.getElementById("delivery-province")?.value.trim(),
+        country: document.getElementById("delivery-country")?.value.trim(),
+        postalCode: document.getElementById("delivery-postal-code")?.value.trim(),
+        isDefault: true,
+      };
+
+      try {
+        await requestJson("/customer/addresses", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        addressForm.reset();
+        bindCartPage();
+        setStatus("cart-status", "Delivery address saved.", "success");
+      } catch (error) {
+        setStatus("cart-status", error.message || "Unable to save address", "error");
+      }
+    });
   }
 
   if (itemsElement.dataset.bound !== "true") {

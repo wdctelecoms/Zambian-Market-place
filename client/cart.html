@@ -31,6 +31,48 @@
       </section>
 
       <section class="card" style="margin-top: 1.5rem;">
+        <h2>Checkout details</h2>
+        <div class="grid grid-2" style="margin-top: 1rem;">
+          <div>
+            <label for="checkout-payment-method">Preferred payment</label>
+            <select id="checkout-payment-method">
+              <option value="CARD">Card</option>
+              <option value="MOBILE_MONEY">Mobile money</option>
+              <option value="CASH">Cash</option>
+              <option value="BANK_TRANSFER">Bank transfer</option>
+            </select>
+          </div>
+          <div>
+            <h3>Saved delivery addresses</h3>
+            <div id="saved-addresses" class="grid"></div>
+          </div>
+        </div>
+        <form id="address-form" class="grid grid-2" style="margin-top: 1rem;">
+          <div class="input-group">
+            <label for="delivery-street">Street</label>
+            <input id="delivery-street" type="text" placeholder="Plot 123, Main Road" required />
+          </div>
+          <div class="input-group">
+            <label for="delivery-city">City</label>
+            <input id="delivery-city" type="text" placeholder="Lusaka" required />
+          </div>
+          <div class="input-group">
+            <label for="delivery-province">Province</label>
+            <input id="delivery-province" type="text" placeholder="Lusaka" required />
+          </div>
+          <div class="input-group">
+            <label for="delivery-country">Country</label>
+            <input id="delivery-country" type="text" placeholder="Zambia" value="Zambia" required />
+          </div>
+          <div class="input-group" style="grid-column: span 2;">
+            <label for="delivery-postal-code">Postal code</label>
+            <input id="delivery-postal-code" type="text" placeholder="10101" required />
+          </div>
+          <button type="submit">Save delivery address</button>
+        </form>
+      </section>
+
+      <section class="card" style="margin-top: 1.5rem;">
         <h2>Your items</h2>
         <div id="cart-items" class="grid" style="margin-top: 1rem;"></div>
       </section>
