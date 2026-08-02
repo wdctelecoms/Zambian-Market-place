@@ -6,8 +6,10 @@ import {
   addToCart,
   createCustomerAddress,
   deleteCustomerAddress,
+  createOrder,
   getCart,
   getCustomerAddresses,
+  getCustomerOrders,
   getCustomerProfile,
   getFavorites,
   getProductDetails,
@@ -44,5 +46,8 @@ router.get("/cart", getCart);
 router.post("/cart", addToCart);
 router.patch("/cart/:productId", updateCartItem);
 router.delete("/cart/:productId", removeCartItem);
+
+router.get("/orders", getCustomerOrders);
+router.post("/orders", createOrder);
 
 export default router;

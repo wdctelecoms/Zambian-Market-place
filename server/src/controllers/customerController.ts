@@ -604,3 +604,122 @@ export const removeCartItem = async (req: AuthenticatedRequest, res: Response) =
     res.status(500).json({ message: "Unable to remove cart item" });
   }
 };
+
+export const getCustomerOrders = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = ensureUserId(req, res);
+    if (!userId) return;
+
+    const customer = await getCustomer(userId);
+    const orders = await prisma.order.findMany({
+      where: { customerId: customer.id },
+      orderBy: { createdAt: "desc" },
+      include: {
+        items: { include: { product: true } },
+        shippingAddress: true,
+        payment: true,
+        receipt: true,
+      },
+    });
+
+    res.json(orders);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Unable to load orders" });
+  }
+};
+
+export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = ensureUserId(req, res);
+    if (!userId) return;
+
+    const customer = await getCustomer(userId);
+    const cart = await prisma.cart.findUnique({
+      where: { customerId: customer.id },
+      include: { items: { include: { product: true } } },
+    });
+
+    const { addressId, paymentMethod } = req.body as {
+      addressId?: string;
+      paymentMethod?: "CARD" | "MOBILE_MONEY" | "CASH" | "BANK_TRANSFER";
+    };
+
+    if (!cart || !cart.items.length) {
+      res.status(400).json({ message: "Cart is empty" });
+      return;
+    }
+
+    const shippingAddress = addressId
+      ? await prisma.address.findFirst({ where: { id: addressId, customerId: customer.id } })
+      : await prisma.address.findFirst({ where: { customerId: customer.id, isDefault: true } });
+
+    if (!shippingAddress) {
+      res.status(400).json({ message: "A delivery address is required" });
+      return;
+    }
+
+    const orderItems = cart.items.map((item) => {
+      if (!item.product.isAvailable || item.product.stock < item.quantity) {
+        throw new Error(`Insufficient stock for ${item.product.name}`);
+      }
+
+      return {
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.product.price,
+      };
+    });
+
+    const total = orderItems.reduce((sum, item) => sum + item.quantity * item.price, 0);
+
+    const order = await prisma.order.create({
+      data: {
+        customerId: customer.id,
+        shippingAddressId: shippingAddress.id,
+        status: "PENDING",
+        total,
+        items: {
+          create: orderItems,
+        },
+        payment: {
+          create: {
+            customerId: customer.id,
+            amount: total,
+            method: paymentMethod || customer.preferredPaymentMethod || "CARD",
+            status: "PENDING",
+          },
+        },
+        receipt: {
+          create: {
+            receiptNumber: `RCPT-${Date.now()}`,
+            customerId: customer.id,
+          },
+        },
+      },
+      include: {
+        items: { include: { product: true } },
+        payment: true,
+        receipt: true,
+      },
+    });
+
+    await Promise.all(
+      orderItems.map(async (item) => {
+        await prisma.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: { decrement: item.quantity },
+          },
+        });
+      }),
+    );
+
+    await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+
+    res.status(201).json(order);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error instanceof Error ? error.message : "Unable to create order" });
+  }
+};

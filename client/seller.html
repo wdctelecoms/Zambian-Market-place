@@ -34,6 +34,7 @@
       <section class="card" style="margin-top: 1.5rem;">
         <h2>Add a new product</h2>
         <form id="seller-product-form" class="grid grid-2">
+          <input id="product-id" type="hidden" />
           <div class="input-group">
             <label for="product-name">Product name</label>
             <input id="product-name" type="text" placeholder="E.g. Groundnuts" required />
@@ -52,13 +53,14 @@
           </div>
           <div class="input-group">
             <label for="product-category">Category</label>
-            <input id="product-category" type="text" placeholder="Fresh produce" />
+            <select id="product-category"></select>
           </div>
           <div class="input-group" style="grid-column: span 2;">
             <label for="product-description">Description</label>
             <textarea id="product-description" placeholder="A short description of this product." required></textarea>
           </div>
-          <button type="submit">Create product</button>
+          <button type="submit" id="seller-product-submit">Create product</button>
+          <button type="button" id="cancel-edit" class="button-secondary" style="display:none;">Cancel edit</button>
         </form>
       </section>
 

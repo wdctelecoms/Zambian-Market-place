@@ -7,6 +7,7 @@ import sellerRoutes from "./routes/sellerRoutes.js";
 import customerRoutes from "./routes/customerRoutes.js";
 import preOrderRoutes from "./routes/preOrderRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
+import publicRoutes from "./routes/publicRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,6 +46,7 @@ app.get("/index.html", (req, res) => {
   res.sendFile(introPath);
 });
 
+app.use("/api/public", publicRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/seller", sellerRoutes);
 app.use("/api/customer", customerRoutes);

@@ -151,6 +151,63 @@ async function requestJson(path, options = {}) {
   return payload;
 }
 
+async function bindHomePage() {
+  const productsContainer = document.getElementById("home-products");
+  const categoriesContainer = document.getElementById("home-categories");
+
+  if (!productsContainer || !categoriesContainer) return;
+
+  try {
+    setStatus("home-status", "Loading the live marketplace feed...", "info");
+    const [products, categories] = await Promise.all([
+      requestJson("/public/products"),
+      requestJson("/public/categories"),
+    ]);
+
+    if (!products.length) {
+      productsContainer.innerHTML = '<div class="empty-state">No approved products are available right now.</div>';
+    } else {
+      productsContainer.innerHTML = products
+        .slice(0, 6)
+        .map(
+          (product) => `
+            <article class="card">
+              <img class="product-image" src="${product.imageUrl || "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=800&q=80"}" alt="${product.name}" />
+              <h3>${product.name}</h3>
+              <p class="text-muted">${product.description}</p>
+              <p class="product-card-price">${formatCurrency(product.price)}</p>
+              <p class="text-muted">${product.seller?.storeName || "Verified seller"}</p>
+            </article>
+          `,
+        )
+        .join("");
+    }
+
+    if (!categories.length) {
+      categoriesContainer.innerHTML = '<div class="empty-state">No categories are available yet.</div>';
+    } else {
+      categoriesContainer.innerHTML = categories
+        .slice(0, 6)
+        .map(
+          (category) => `
+            <article class="card">
+              <h3>${category.name}</h3>
+              <p class="text-muted">${category.description || "Browse this category in the marketplace."}</p>
+              <p class="text-muted">${category.productCount} live products</p>
+            </article>
+          `,
+        )
+        .join("");
+    }
+
+    setStatus("home-status", "Live marketplace data loaded.", "success");
+  } catch (error) {
+    productsContainer.innerHTML = '<div class="empty-state">The marketplace feed could not be loaded.</div>';
+    categoriesContainer.innerHTML = '<div class="empty-state">Category data is currently unavailable.</div>';
+    setStatus("home-status", error.message || "Unable to load marketplace home feed", "error");
+  }
+}
+
 function bindLogoutLinks() {
   document.querySelectorAll("[data-action='logout']").forEach((link) => {
     link.addEventListener("click", (event) => {
@@ -261,26 +318,68 @@ function bindRegisterForm() {
 function bindShopPage() {
   const searchForm = document.getElementById("shop-search-form");
   const productsGrid = document.getElementById("products-grid");
+  const categoryFilter = document.getElementById("category-filter");
+  const minPrice = document.getElementById("min-price");
+  const maxPrice = document.getElementById("max-price");
+  const details = document.getElementById("product-details");
   if (!searchForm || !productsGrid || searchForm.dataset.bound === "true") return;
   searchForm.dataset.bound = "true";
   productsGrid.dataset.bound = "true";
 
+  const renderCategories = async () => {
+    if (!categoryFilter) return;
+    const categories = await requestJson("/public/categories");
+    categoryFilter.innerHTML = '<option value="">All categories</option>' + categories
+      .map((category) => `<option value="${category.slug}">${category.name}</option>`)
+      .join("");
+  };
+
+  const renderProductDetails = async (productId) => {
+    if (!details) return;
+    try {
+      const payload = await requestJson(`/public/products/${productId}`);
+      const { product, relatedProducts } = payload;
+      details.style.display = "block";
+      details.innerHTML = `
+        <h2>${product.name}</h2>
+        <p class="text-muted">${product.description}</p>
+        <p class="product-card-price">${formatCurrency(product.price)}</p>
+        <p class="text-muted">Seller: ${product.seller?.storeName || "Verified seller"}</p>
+        <p class="text-muted">${product.reviewCount || 0} review(s) • ${product.reviewAverage ? product.reviewAverage.toFixed(1) : "0.0"} average rating</p>
+        <div class="product-actions">
+          <button type="button" class="button-secondary" data-action="add-to-cart" data-product-id="${product.id}">Add to cart</button>
+          <button type="button" data-action="preorder" data-product-id="${product.id}">Pre-order</button>
+        </div>
+        <div class="grid grid-3" style="margin-top: 1rem;">
+          ${relatedProducts.map((related) => `
+            <article class="card">
+              <h3>${related.name}</h3>
+              <p class="text-muted">${related.description}</p>
+              <p class="product-card-price">${formatCurrency(related.price)}</p>
+            </article>
+          `).join("")}
+        </div>
+      `;
+    } catch (error) {
+      details.style.display = "block";
+      details.innerHTML = '<div class="empty-state">Unable to load product details.</div>';
+      setStatus("shop-status", error.message || "Unable to load product details", "error");
+    }
+  };
+
   const renderProducts = async (query = "") => {
-    if (!isAuthenticated()) {
-      setStatus("shop-status", "Please login as a customer to browse products.", "error");
-      productsGrid.innerHTML = '<div class="empty-state">Login to continue shopping.</div>';
-      return;
-    }
-
-    if (getUserRole() !== "customer") {
-      setStatus("shop-status", "Seller accounts can manage products from the dashboard.", "error");
-      productsGrid.innerHTML = '<div class="empty-state">Switch to a customer account to place orders.</div>';
-      return;
-    }
-
     try {
       setStatus("shop-status", "Loading products...", "info");
-      const products = await requestJson(`/customer/search/products?q=${encodeURIComponent(query)}`);
+      productsGrid.innerHTML = '<div class="empty-state">Loading products from the live marketplace...</div>';
+      const params = new URLSearchParams();
+      if (query) params.set("q", query);
+      const selectedCategory = categoryFilter?.value || "";
+      const min = minPrice?.value?.trim() || "";
+      const max = maxPrice?.value?.trim() || "";
+      if (selectedCategory) params.set("category", selectedCategory);
+      if (min) params.set("minPrice", min);
+      if (max) params.set("maxPrice", max);
+      const products = await requestJson(`/public/products?${params.toString()}`);
       if (!products.length) {
         productsGrid.innerHTML = '<div class="empty-state">No products found yet.</div>';
         setStatus("shop-status", "No products match your search right now.", "info");
@@ -300,6 +399,7 @@ function bindShopPage() {
                 <div class="product-actions">
                   <button type="button" class="button-secondary" data-action="add-to-cart" data-product-id="${product.id}">Add to cart</button>
                   <button type="button" data-action="preorder" data-product-id="${product.id}">Pre-order</button>
+                  <button type="button" data-action="details" data-product-id="${product.id}">Details</button>
                 </div>
               </div>
             </article>
@@ -309,6 +409,7 @@ function bindShopPage() {
 
       setStatus("shop-status", `Showing ${products.length} products from the marketplace.`, "success");
     } catch (error) {
+      productsGrid.innerHTML = '<div class="empty-state">Unable to load products right now.</div>';
       setStatus("shop-status", error.message || "Unable to load products", "error");
     }
   };
@@ -327,6 +428,16 @@ function bindShopPage() {
     if (!productId) return;
 
     try {
+      if (target.dataset.action === "details") {
+        await renderProductDetails(productId);
+        return;
+      }
+
+      if (!isAuthenticated()) {
+        window.location.href = `login.html?returnUrl=${encodeURIComponent("shop.html")}`;
+        return;
+      }
+
       if (target.dataset.action === "add-to-cart") {
         await requestJson("/customer/cart", {
           method: "POST",
@@ -353,6 +464,7 @@ function bindShopPage() {
     }
   });
 
+  renderCategories();
   renderProducts();
 }
 
@@ -360,32 +472,60 @@ async function bindSellerPage() {
   const dashboardStats = document.getElementById("dashboard-stats");
   const sellerProducts = document.getElementById("seller-products");
   const form = document.getElementById("seller-product-form");
+  const categorySelect = document.getElementById("product-category");
+  const cancelEditButton = document.getElementById("cancel-edit");
+  const submitButton = document.getElementById("seller-product-submit");
   if (!dashboardStats || !sellerProducts) return;
+
+  const loadCategoryOptions = async () => {
+    if (!categorySelect) return;
+    try {
+      const categories = await requestJson("/public/categories");
+      categorySelect.innerHTML = categories
+        .map((category) => `<option value="${category.slug}">${category.name}</option>`)
+        .join("");
+    } catch {
+      categorySelect.innerHTML = '<option value="">General</option>';
+    }
+  };
 
   if (form && form.dataset.bound !== "true") {
     form.dataset.bound = "true";
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
+      const productId = document.getElementById("product-id").value.trim();
       const payload = {
         name: document.getElementById("product-name").value.trim(),
         description: document.getElementById("product-description").value.trim(),
         price: Number(document.getElementById("product-price").value),
         stock: Number(document.getElementById("product-stock").value),
         imageUrl: document.getElementById("product-image").value.trim(),
-        categoryName: document.getElementById("product-category").value.trim() || "General",
+        categoryName: categorySelect?.value || "General",
       };
 
       try {
-        setStatus("dashboard-status", "Creating product...", "info");
-        await requestJson("/seller/products", {
-          method: "POST",
+        setStatus("dashboard-status", productId ? "Updating product..." : "Creating product...", "info");
+        await requestJson(productId ? `/seller/products/${productId}` : "/seller/products", {
+          method: productId ? "PATCH" : "POST",
           body: JSON.stringify(payload),
         });
         form.reset();
-        bindSellerPage();
+        if (cancelEditButton) cancelEditButton.style.display = "none";
+        if (submitButton) submitButton.textContent = "Create product";
+        await bindSellerPage();
       } catch (error) {
-        setStatus("dashboard-status", error.message || "Unable to create product", "error");
+        setStatus("dashboard-status", error.message || "Unable to save product", "error");
       }
+    });
+  }
+
+  if (cancelEditButton && cancelEditButton.dataset.bound !== "true") {
+    cancelEditButton.dataset.bound = "true";
+    cancelEditButton.addEventListener("click", () => {
+      form.reset();
+      document.getElementById("product-id").value = "";
+      cancelEditButton.style.display = "none";
+      if (submitButton) submitButton.textContent = "Create product";
     });
   }
 
@@ -404,6 +544,7 @@ async function bindSellerPage() {
   }
 
   try {
+    await loadCategoryOptions();
     setStatus("dashboard-status", "Loading seller dashboard...", "info");
     const [dashboard, products] = await Promise.all([requestJson("/seller/dashboard"), requestJson("/seller/products")]);
 
@@ -429,17 +570,52 @@ async function bindSellerPage() {
                 <p class="text-muted">${product.description}</p>
                 <p class="product-card-price">${formatCurrency(product.price)}</p>
                 <p class="text-muted">Stock: ${product.stock} • ${product.isAvailable ? "Available" : "Unavailable"}</p>
+                <div class="product-actions">
+                  <button type="button" data-action="edit-product" data-product-id="${product.id}">Edit</button>
+                  <button type="button" class="button-secondary" data-action="delete-product" data-product-id="${product.id}">Delete</button>
+                </div>
               </article>
             `,
           )
           .join("")
       : '<div class="empty-state">No products listed yet.</div>';
 
+    sellerProducts.addEventListener("click", async (event) => {
+      const target = event.target.closest("button");
+      if (!target) return;
+      const productId = target.dataset.productId;
+      if (!productId) return;
+
+      try {
+        if (target.dataset.action === "delete-product") {
+          await requestJson(`/seller/products/${productId}`, { method: "DELETE" });
+          await bindSellerPage();
+          setStatus("dashboard-status", "Product deleted.", "success");
+          return;
+        }
+
+        if (target.dataset.action === "edit-product") {
+          const product = await requestJson(`/seller/products/${productId}`);
+          document.getElementById("product-id").value = product.id;
+          document.getElementById("product-name").value = product.name;
+          document.getElementById("product-description").value = product.description || "";
+          document.getElementById("product-price").value = product.price;
+          document.getElementById("product-stock").value = product.stock;
+          document.getElementById("product-image").value = product.imageUrl || "";
+          categorySelect.value = product.category?.slug || categorySelect.value;
+          if (cancelEditButton) cancelEditButton.style.display = "inline-block";
+          if (submitButton) submitButton.textContent = "Update product";
+          setStatus("dashboard-status", "Product loaded for editing.", "success");
+        }
+      } catch (error) {
+        setStatus("dashboard-status", error.message || "Unable to update seller product", "error");
+      }
+    });
+
     setStatus("dashboard-status", "Dashboard ready.", "success");
   } catch (error) {
     setStatus("dashboard-status", error.message || "Unable to load seller dashboard", "error");
   }
-
 }
 
 async function bindCartPage() {
@@ -448,6 +624,7 @@ async function bindCartPage() {
   const addressList = document.getElementById("saved-addresses");
   const addressForm = document.getElementById("address-form");
   const paymentSelect = document.getElementById("checkout-payment-method");
+  const placeOrderButton = document.getElementById("place-order-button");
   if (!summaryElement || !itemsElement) return;
 
   if (!isAuthenticated()) {
@@ -485,11 +662,12 @@ async function bindCartPage() {
         ? addresses
             .map(
               (address) => `
-                <div class="card">
+                <label class="card" style="display:block; cursor:pointer;">
+                  <input type="radio" name="checkout-address" value="${address.id}" ${address.isDefault ? "checked" : ""} />
                   <p><strong>${address.street}</strong></p>
                   <p class="text-muted">${address.city}, ${address.province}, ${address.country} • ${address.postalCode}</p>
                   <p class="text-muted">${address.isDefault ? "Default delivery address" : "Saved address"}</p>
-                </div>
+                </label>
               `,
             )
             .join("")
@@ -555,6 +733,16 @@ async function bindCartPage() {
     });
   }
 
+  if (addressList && addressList.dataset.bound !== "true") {
+    addressList.dataset.bound = "true";
+    addressList.addEventListener("change", () => {
+      const selectedRadio = addressList.querySelector('input[name="checkout-address"]:checked');
+      if (selectedRadio) {
+        setStatus("cart-status", "Selected delivery address for checkout.", "info");
+      }
+    });
+  }
+
   if (addressForm && addressForm.dataset.bound !== "true") {
     addressForm.dataset.bound = "true";
     addressForm.addEventListener("submit", async (event) => {
@@ -578,6 +766,32 @@ async function bindCartPage() {
         setStatus("cart-status", "Delivery address saved.", "success");
       } catch (error) {
         setStatus("cart-status", error.message || "Unable to save address", "error");
+      }
+    });
+  }
+
+  if (placeOrderButton && placeOrderButton.dataset.bound !== "true") {
+    placeOrderButton.dataset.bound = "true";
+    placeOrderButton.addEventListener("click", async () => {
+      try {
+        const selectedAddress = addressList?.querySelector('input[name="checkout-address"]:checked')?.value;
+        if (!selectedAddress) {
+          setStatus("cart-status", "Please save and select a delivery address before ordering.", "error");
+          return;
+        }
+
+        const order = await requestJson("/customer/orders", {
+          method: "POST",
+          body: JSON.stringify({
+            addressId: selectedAddress,
+            paymentMethod: paymentSelect?.value || "CARD",
+          }),
+        });
+
+        bindCartPage();
+        setStatus("cart-status", `Order ${order.id} created successfully for ${formatCurrency(order.total)}.`, "success");
+      } catch (error) {
+        setStatus("cart-status", error.message || "Unable to place order", "error");
       }
     });
   }
@@ -972,6 +1186,7 @@ function initializePage() {
     return;
   }
 
+  bindHomePage();
   bindLogoutLinks();
   bindLoginForm();
   bindRegisterForm();
