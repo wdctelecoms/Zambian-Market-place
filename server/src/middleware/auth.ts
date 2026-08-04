@@ -7,8 +7,109 @@ interface AuthenticatedRequest extends Request {
     id: string;
     role: string;
     email: string;
+    fullName?: string;
   };
 }
+
+const readMetadataValue = (metadata: Record<string, unknown> | undefined, key: string) => {
+  const value = metadata?.[key];
+  if (typeof value === "string") {
+    return value.trim();
+  }
+  return "";
+};
+
+const resolveRole = (metadata: Record<string, unknown> | undefined) => {
+  const role = readMetadataValue(metadata, "role");
+  return role === "SELLER" ? "SELLER" : "CUSTOMER";
+};
+
+const resolvePaymentMethod = (metadata: Record<string, unknown> | undefined) => {
+  const value = readMetadataValue(metadata, "paymentMethod");
+  return value === "MOBILE_MONEY" || value === "CASH" || value === "BANK_TRANSFER" || value === "CARD"
+    ? value
+    : undefined;
+};
+
+const fallbackFullName = (email?: string) => {
+  if (!email) return "Marketplace User";
+  const localPart = email.split("@")[0] || "Marketplace User";
+  return localPart.replace(/[._-]+/g, " ").trim() || "Marketplace User";
+};
+
+const ensureProfileFromToken = async (payload: { sub: string; email?: string; userMetadata?: Record<string, unknown> }) => {
+  const existingUser = await prisma.user.findUnique({
+    where: { id: payload.sub },
+    select: { id: true, role: true, email: true, fullName: true },
+  });
+
+  if (existingUser) {
+    return existingUser;
+  }
+
+  if (!payload.email) {
+    throw new Error("Token missing email");
+  }
+
+  const metadata = payload.userMetadata ?? {};
+  const role = resolveRole(metadata);
+  const fullName = readMetadataValue(metadata, "fullName") || fallbackFullName(payload.email);
+  const storeName = readMetadataValue(metadata, "storeName") || fullName;
+  const phone = readMetadataValue(metadata, "phone") || undefined;
+  const paymentMethod = resolvePaymentMethod(metadata);
+  const street = readMetadataValue(metadata, "street") || undefined;
+  const city = readMetadataValue(metadata, "city") || undefined;
+  const province = readMetadataValue(metadata, "province") || undefined;
+  const country = readMetadataValue(metadata, "country") || undefined;
+  const postalCode = readMetadataValue(metadata, "postalCode") || undefined;
+
+  const createdUser = await prisma.user.create({
+    data: {
+      id: payload.sub,
+      fullName,
+      email: payload.email,
+      role,
+      ...(role === "SELLER"
+        ? {
+            seller: {
+              create: {
+                storeName,
+                phone,
+              },
+            },
+          }
+        : {
+            customer: {
+              create: {
+                phone,
+                preferredPaymentMethod: paymentMethod,
+                cart: { create: {} },
+              },
+            },
+          }),
+    },
+    select: { id: true, role: true, email: true, fullName: true },
+  });
+
+  if (role !== "SELLER" && street && city && province && country && postalCode) {
+    const customer = await prisma.customer.findUnique({ where: { userId: payload.sub } });
+    if (customer) {
+      await prisma.address.create({
+        data: {
+          customerId: customer.id,
+          street,
+          city,
+          province,
+          country,
+          postalCode,
+          isDefault: true,
+        },
+      });
+    }
+  }
+
+  return createdUser;
+};
 
 // Verifies the Supabase-issued access token, then loads our own profile row
 // (for the app-specific role/email) and attaches it as req.user.
@@ -28,15 +129,7 @@ export const authenticate = async (
 
   try {
     const payload = await verifySupabaseToken(token);
-    const user = await prisma.user.findUnique({
-      where: { id: payload.sub },
-      select: { id: true, role: true, email: true },
-    });
-
-    if (!user) {
-      res.status(401).json({ message: "Profile not set up yet. Call /api/auth/sync first." });
-      return;
-    }
+    const user = await ensureProfileFromToken(payload);
 
     req.user = user;
     next();

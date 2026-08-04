@@ -278,7 +278,24 @@ function bindRegisterForm() {
 
     try {
       setStatus("form-status", "Creating your account...", "info");
-      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            fullName,
+            role,
+            phone,
+            paymentMethod,
+            street,
+            city,
+            province,
+            country,
+            postalCode,
+            storeName: role === "SELLER" ? fullName : undefined,
+          },
+        },
+      });
       if (error) throw error;
 
       if (!data.session) {

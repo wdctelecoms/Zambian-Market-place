@@ -11,6 +11,7 @@ const JWKS = createRemoteJWKSet(new URL(`${SUPABASE_URL.replace(/\/$/, "")}/auth
 export interface SupabaseTokenPayload {
   sub: string;
   email?: string;
+  userMetadata?: Record<string, unknown>;
 }
 
 export const verifySupabaseToken = async (token: string): Promise<SupabaseTokenPayload> => {
@@ -22,5 +23,9 @@ export const verifySupabaseToken = async (token: string): Promise<SupabaseTokenP
     throw new Error("Token missing subject");
   }
 
-  return { sub: payload.sub, email: payload.email as string | undefined };
+  return {
+    sub: payload.sub,
+    email: payload.email as string | undefined,
+    userMetadata: (payload.user_metadata as Record<string, unknown> | undefined) ?? undefined,
+  };
 };
