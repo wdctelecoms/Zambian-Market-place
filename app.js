@@ -43,6 +43,52 @@ function getAccessToken() {
   return authState.tokens?.accessToken || "";
 }
 
+async function hydrateAuthSessionFromSupabase() {
+  if (authState.user && authState.tokens?.accessToken) {
+    return authState.user;
+  }
+
+  const {
+    data: { session },
+    error,
+  } = await supabaseClient.auth.getSession();
+
+  if (error || !session?.access_token) {
+    return null;
+  }
+
+  authState.tokens = { accessToken: session.access_token };
+
+  try {
+    const { user } = await requestJson("/auth/me", {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    persistAuthState(user, { accessToken: session.access_token });
+    return user;
+  } catch (meError) {
+    const email = session.user?.email || "";
+    const fullName = session.user?.user_metadata?.full_name || email.split("@")[0] || "Google user";
+    const { user } = await requestJson("/auth/sync", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({
+        fullName,
+        role: "CUSTOMER",
+        phone: "",
+        paymentMethod: "CARD",
+        street: "",
+        city: "",
+        province: "",
+        country: "Zambia",
+        postalCode: "",
+      }),
+    });
+
+    persistAuthState(user, { accessToken: session.access_token });
+    return user;
+  }
+}
+
 // Supabase refreshes the access token in the background on its own timer;
 // mirror that into our storage so getAccessToken() always has a live token
 // without every page needing to know about the refresh.
@@ -155,6 +201,27 @@ function bindLoginForm() {
       setTimeout(() => redirectAfterAuth(user), 350);
     } catch (error) {
       setStatus("form-status", error.message || "Unable to login", "error");
+    }
+  });
+}
+
+function bindGoogleOAuthButton() {
+  const button = document.getElementById("google-oauth-button");
+  if (!button || button.dataset.bound === "true") return;
+  button.dataset.bound = "true";
+
+  button.addEventListener("click", async () => {
+    try {
+      setStatus("form-status", "Redirecting to Google...", "info");
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+      if (error) throw error;
+    } catch (error) {
+      setStatus("form-status", error.message || "Unable to continue with Google", "error");
     }
   });
 }
@@ -593,10 +660,19 @@ async function bindChatPage() {
   loadConversations();
 }
 
-function initializePage() {
+async function initializePage() {
+  const currentPage = window.location.pathname.split("/").pop() || "index.html";
+  const user = await hydrateAuthSessionFromSupabase().catch(() => null);
+
+  if (user && (currentPage === "login.html" || currentPage === "register.html")) {
+    redirectAfterAuth(user);
+    return;
+  }
+
   bindLogoutLinks();
   bindLoginForm();
   bindRegisterForm();
+  bindGoogleOAuthButton();
   bindShopPage();
   bindSellerPage();
   bindCartPage();

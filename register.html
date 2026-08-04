@@ -261,9 +261,24 @@ button[type="submit"]{
     margin-top: 4px;
 }
 
+button[type="button"].button-secondary{
+    background: var(--color-surface);
+    color: var(--color-primary-700);
+    border: 1px solid var(--color-border);
+    padding: 13px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.96rem;
+    font-weight: 600;
+    font-family: var(--font-body);
+    transition: background var(--transition), transform var(--transition), border-color var(--transition);
+}
+
 button[type="submit"]:hover{ background: var(--color-primary-700); }
 button[type="submit"]:active{ transform: translateY(1px); }
 button[type="submit"]:disabled{ background: var(--color-ink-400); cursor: not-allowed; }
+button[type="button"].button-secondary:hover{ background: #f7f9f5; border-color: var(--color-primary-500); }
+button[type="button"].button-secondary:active{ transform: translateY(1px); }
 
 .status-message{
     min-height: 18px;
@@ -435,6 +450,7 @@ button[type="submit"]:disabled{ background: var(--color-ink-400); cursor: not-al
                 <div id="form-status" class="status-message" role="status" aria-live="polite"></div>
 
                 <button type="submit" id="submit-btn">Create account</button>
+                <button type="button" id="google-oauth-button" class="button-secondary">Continue with Google</button>
             </form>
 
             <div class="login-link">
