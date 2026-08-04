@@ -6,6 +6,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_0F_NAcjt5hB7cqq8t6y2qA_tFWGv8Oi";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const AUTH_STORAGE_KEY = "zmarket-auth";
+const MAIN_APP_SHOP_URL = "https://zambian-market-place.wdcentreprenuer.workers.dev/shop";
 
 const authState = loadAuthState();
 
@@ -73,7 +74,12 @@ function setStatus(elementId, message, type = "info") {
 
 function redirectAfterAuth(user) {
   const role = user?.role;
-  window.location.href = role === "SELLER" ? "seller.html" : "shop.html";
+  if (role === "SELLER") {
+    window.location.href = "seller.html";
+    return;
+  }
+
+  window.location.href = MAIN_APP_SHOP_URL;
 }
 
 async function requestJson(path, options = {}) {
@@ -167,7 +173,13 @@ function bindRegisterForm() {
 
     try {
       setStatus("form-status", "Creating your account...", "info");
-      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: MAIN_APP_SHOP_URL,
+        },
+      });
       if (error) throw error;
 
       if (!data.session) {
