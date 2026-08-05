@@ -6,7 +6,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_0F_NAcjt5hB7cqq8t6y2qA_tFWGv8Oi";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const AUTH_STORAGE_KEY = "zmarket-auth";
-const MAIN_APP_SHOP_URL = "https://zambian-market-place.wdcentreprenuer.workers.dev/shop";
+const MAIN_APP_SHOP_URL = "https://zambian-market-place.wdcentreprenuer.workers.dev/shop.html";
 
 const authState = loadAuthState();
 
