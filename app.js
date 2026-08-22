@@ -89,6 +89,532 @@ async function hydrateAuthSessionFromSupabase() {
   }
 }
 
+function getReturnUrl() {
+  const raw = new URLSearchParams(window.location.search).get("returnUrl");
+  if (!raw) return "";
+
+  try {
+    const parsed = new URL(raw, window.location.origin);
+    const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "dashboard.html"]);
+    if (allowedPages.has(parsed.pathname.split("/").pop() || "")) {
+      return parsed.pathname.replace(/^\//, "");
+    }
+  } catch {
+    // Ignore malformed return URLs and fall back to the role-based redirect.
+  }
+
+  return "";
+}
+
+function redirectToLoginIfNeeded() {
+  const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "dashboard.html"]);
+  const currentPage = window.location.pathname.split("/").pop() || "index.html";
+
+  if (!protectedPages.has(currentPage) || isAuthenticated()) {
+    return false;
+  }
+
+  const returnUrl = encodeURIComponent(currentPage);
+  window.location.replace(`login.html?returnUrl=${returnUrl}`);
+  return true;
+}
+
+// Supabase refreshes the access token in the background on its own timer;
+// mirror that into our storage so getAccessToken() always has a live token
+// without every page needing to know about the refresh.
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_OUT" || !session) {
+    if (authState.user) clearAuthState();
+    return;
+  }
+  if (authState.user) {
+    authState.tokens = { accessToken: session.access_token };
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authState));
+  }
+});
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat("en-ZM", {
+    style: "currency",
+    currency: "ZMW",
+    maximumFractionDigits: 2,
+  }).format(value || 0);
+}
+
+function setStatus(elementId, message, type = "info") {
+  const target = document.getElementById(elementId);
+  if (!target) return;
+  target.textContent = message;
+  target.className = `status-message ${type === "error" ? "status-error" : type === "success" ? "status-success" : ""}`.trim();
+}
+
+function redirectAfterAuth(user) {
+  const role = user?.role;
+  const returnUrl = getReturnUrl();
+  if (returnUrl) {
+    window.location.href = returnUrl;
+    return;
+  }
+
+  if (role === "SELLER") {
+    window.location.href = "seller.html";
+    return;
+  }
+
+  window.location.href = MAIN_APP_SHOP_URL;
+}
+
+async function requestJson(path, options = {}) {
+  const doFetch = () => {
+    const headers = new Headers(options.headers || {});
+    if (!(options.body instanceof FormData)) {
+      headers.set("Content-Type", "application/json");
+    }
+    if (getAccessToken()) {
+      headers.set("Authorization", `Bearer ${getAccessToken()}`);
+    }
+    return fetch(`/api${path}`, { ...options, headers });
+  };
+
+  let response = await doFetch();
+
+  // The cached access token can go stale if the tab sat idle past its ~1hr
+  // expiry. Supabase keeps a refresh token in its own storage regardless,
+  // so try once to get a fresh access token before giving up.
+  if (response.status === 401 && authState.user) {
+    const { data } = await supabaseClient.auth.getSession();
+    if (data.session) {
+      authState.tokens = { accessToken: data.session.access_token };
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authState));
+      response = await doFetch();
+    }
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+  const payload = contentType.includes("application/json")
+    ? await response.json().catch(() => null)
+    : await response.text();
+
+  if (!response.ok) {
+    const message = typeof payload === "object" && payload && "message" in payload ? payload.message : "Request failed";
+    throw new Error(message);
+  }
+
+  return payload;
+}
+
+async function bindHomePage() {
+  const productsContainer = document.getElementById("home-products");
+  const categoriesContainer = document.getElementById("home-categories");
+
+  if (!productsContainer || !categoriesContainer) return;
+
+  try {
+    setStatus("home-status", "Loading the live marketplace feed...", "info");
+    const [products, categories] = await Promise.all([
+      requestJson("/public/products"),
+      requestJson("/public/categories"),
+    ]);
+
+    if (!products.length) {
+      productsContainer.innerHTML = '<div class="empty-state">No approved products are available right now.</div>';
+    } else {
+      productsContainer.innerHTML = products
+        .slice(0, 6)
+        .map(
+          (product) => `
+            <article class="card">
+              <img class="product-image" src="${product.imageUrl || "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=800&q=80"}" alt="${product.name}" />
+              <h3>${product.name}</h3>
+              <p class="text-muted">${product.description}</p>
+              <p class="product-card-price">${formatCurrency(product.price)}</p>
+              <p class="text-muted">${product.seller?.storeName || "Verified seller"}</p>
+            </article>
+          `,
+        )
+        .join("");
+    }
+
+    if (!categories.length) {
+      categoriesContainer.innerHTML = '<div class="empty-state">No categories are available yet.</div>';
+    } else {
+      categoriesContainer.innerHTML = categories
+        .slice(0, 6)
+        .map(
+          (category) => `
+            <article class="card">
+              <h3>${category.name}</h3>
+              <p class="text-muted">${category.description || "Browse this category in the marketplace."}</p>
+              <p class="text-muted">${category.productCount} live products</p>
+            </article>
+          `,
+        )
+        .join("");
+    }
+
+    setStatus("home-status", "Live marketplace data loaded.", "success");
+  } catch (error) {
+    productsContainer.innerHTML = '<div class="empty-state">The marketplace feed could not be loaded.</div>';
+    categoriesContainer.innerHTML = '<div class="empty-state">Category data is currently unavailable.</div>';
+    setStatus("home-status", error.message || "Unable to load marketplace home feed", "error");
+  }
+}
+
+function bindLogoutLinks() {
+  document.querySelectorAll("[data-action='logout']").forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      supabaseClient.auth.signOut();
+      clearAuthState();
+      window.location.href = "login.html";
+    });
+  });
+}
+
+function bindLoginForm() {
+  const form = document.getElementById("login-form");
+  if (!form || form.dataset.bound === "true") return;
+  form.dataset.bound = "true";
+
+  if (isAuthenticated()) {
+    redirectAfterAuth(authState.user);
+    return;
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    try {
+      setStatus("form-status", "Signing you in...", "info");
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+
+      const { user } = await requestJson("/auth/me", {
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+      });
+
+      persistAuthState(user, { accessToken: data.session.access_token });
+      setStatus("form-status", "Login successful. Redirecting...", "success");
+      setTimeout(() => redirectAfterAuth(user), 350);
+    } catch (error) {
+      setStatus("form-status", error.message || "Unable to login", "error");
+    }
+  });
+}
+
+function bindGoogleOAuthButton() {
+  const button = document.getElementById("google-oauth-button");
+  if (!button || button.dataset.bound === "true") return;
+  button.dataset.bound = "true";
+
+  button.addEventListener("click", async () => {
+    try {
+      setStatus("form-status", "Redirecting to Google...", "info");
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+      if (error) throw error;
+    } catch (error) {
+      setStatus("form-status", error.message || "Unable to continue with Google", "error");
+    }
+  });
+}
+
+function bindRegisterForm() {
+  const form = document.getElementById("register-form");
+  if (!form || form.dataset.bound === "true") return;
+  form.dataset.bound = "true";
+
+  if (isAuthenticated()) {
+    redirectAfterAuth(authState.user);
+    return;
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const fullName = document.getElementById("full-name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const role = document.getElementById("role").value;
+    const phone = document.getElementById("phone").value.trim();
+    const paymentMethod = document.getElementById("payment-method")?.value || "CARD";
+    const street = document.getElementById("street")?.value.trim() || "";
+    const city = document.getElementById("city")?.value.trim() || "";
+    const province = document.getElementById("province")?.value.trim() || "";
+    const country = document.getElementById("country")?.value.trim() || "Zambia";
+    const postalCode = document.getElementById("postal-code")?.value.trim() || "";
+
+    try {
+      setStatus("form-status", "Creating your account...", "info");
+      const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: MAIN_APP_SHOP_URL,
+          data: {
+            fullName,
+            role,
+            phone,
+            paymentMethod,
+            street,
+            city,
+            province,
+            country,
+            postalCode,
+            storeName: role === "SELLER" ? fullName : undefined,
+          },
+        },
+      });
+      if (error) throw error;
+
+      if (!data.session) {
+        setStatus(
+          "form-status",
+          "Account created. Check your email to confirm before logging in.",
+          "success",
+        );
+        return;
+      }
+
+      const { user } = await requestJson("/auth/sync", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+        body: JSON.stringify({
+          fullName,
+          role,
+          phone,
+          paymentMethod,
+          street,
+          city,
+          province,
+          country,
+          postalCode,
+        }),
+      });
+
+      persistAuthState(user, { accessToken: data.session.access_token });
+      setStatus("form-status", "Account created. Redirecting...", "success");
+      setTimeout(() => redirectAfterAuth(user), 350);
+    } catch (error) {
+      setStatus("form-status", error.message || "Unable to register", "error");
+    }
+  });
+}
+
+function bindShopPage() {
+  const searchForm = document.getElementById("shop-search-form");
+  const productsGrid = document.getElementById("products-grid");
+  const categoryFilter = document.getElementById("category-filter");
+  const minPrice = document.getElementById("min-price");
+  const maxPrice = document.getElementById("max-price");
+  const details = document.getElementById("product-details");
+  if (!searchForm || !productsGrid || searchForm.dataset.bound === "true") return;
+  searchForm.dataset.bound = "true";
+  productsGrid.dataset.bound = "true";
+
+  const renderCategories = async () => {
+    if (!categoryFilter) return;
+    const categories = await requestJson("/public/categories");
+    categoryFilter.innerHTML = '<option value="">All categories</option>' + categories
+      .map((category) => `<option value="${category.slug}">${category.name}</option>`)
+      .join("");
+  };
+
+  const renderProductDetails = async (productId) => {
+    if (!details) return;
+    try {
+      const payload = await requestJson(`/public/products/${productId}`);
+      const { product, relatedProducts } = payload;
+      details.style.display = "block";
+      details.innerHTML = `
+        <h2>${product.name}</h2>
+        <p class="text-muted">${product.description}</p>
+        <p class="product-card-price">${formatCurrency(product.price)}</p>
+        <p class="text-muted">Seller: ${product.seller?.storeName || "Verified seller"}</p>
+        <p class="text-muted">${product.reviewCount || 0} review(s) • ${product.reviewAverage ? product.reviewAverage.toFixed(1) : "0.0"} average rating</p>
+        <div class="product-actions">
+          <button type="button" class="button-secondary" data-action="add-to-cart" data-product-id="${product.id}">Add to cart</button>
+          <button type="button" data-action="preorder" data-product-id="${product.id}">Pre-order</button>
+        </div>
+        <div class="grid grid-3" style="margin-top: 1rem;">
+          ${relatedProducts.map((related) => `
+            <article class="card">
+              <h3>${related.name}</h3>
+              <p class="text-muted">${related.description}</p>
+              <p class="product-card-price">${formatCurrency(related.price)}</p>
+            </article>
+          `).join("")}
+        </div>
+      `;
+    } catch (error) {
+      details.style.display = "block";
+      details.innerHTML = '<div class="empty-state">Unable to load product details.</div>';
+      setStatus("shop-status", error.message || "Unable to load product details", "error");
+    }
+  };
+
+  const renderProducts = async (query = "") => {
+    try {
+      setStatus("shop-status", "Loading products...", "info");
+      productsGrid.innerHTML = '<div class="empty-state">Loading products from the live marketplace...</div>';
+      const params = new URLSearchParams();
+      if (query) params.set("q", query);
+      const selectedCategory = categoryFilter?.value || "";
+      const min = minPrice?.value?.trim() || "";
+      const max = maxPrice?.value?.trim() || "";
+      if (selectedCategory) params.set("category", selectedCategory);
+      if (min) params.set("minPrice", min);
+      if (max) params.set("maxPrice", max);
+      const products = await requestJson(`/public/products?${params.toString()}`);
+      if (!products.length) {
+        productsGrid.innerHTML = '<div class="empty-state">No products found yet.</div>';
+        setStatus("shop-status", "No products match your search right now.", "info");
+        return;
+      }
+
+      productsGrid.innerHTML = products
+        .map(
+          (product) => `
+            <article class="product-card">
+              <img class="product-image" src="${product.imageUrl || "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=800&q=80"}" alt="${product.name}" />
+              <div class="product-card-content">
+                <h3 class="product-card-title">${product.name}</h3>
+                <p class="text-muted">${product.description}</p>
+                <p class="product-card-price">${formatCurrency(product.price)}</p>
+                <p class="text-muted">Sold by ${product.seller?.storeName || "a seller"}</p>
+                <div class="product-actions">
+                  <button type="button" class="button-secondary" data-action="add-to-cart" data-product-id="${product.id}">Add to cart</button>
+                  <button type="button" data-action="preorder" data-product-id="${product.id}">Pre-order</button>
+                  <button type="button" data-action="details" data-product-id="${product.id}">Details</button>
+                </div>
+              </div>
+            </article>
+          `,
+        )
+        .join("");
+
+      setStatus("shop-status", `Showing ${products.length} products from the marketplace.`, "success");
+    } catch (error) {
+      productsGrid.innerHTML = '<div class="empty-state">Unable to load products right now.</div>';
+      setStatus("shop-status", error.message || "Unable to load products", "error");
+    }
+  };
+
+  searchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const query = document.getElementById("search").value.trim();
+    renderProducts(query);
+  });
+
+  productsGrid.addEventListener("click", async (event) => {
+    const target = event.target.closest("button");
+    if (!target) return;
+
+    const productId = target.dataset.productId;
+    if (!productId) return;
+
+    try {
+      if (target.dataset.action === "details") {
+        await renderProductDetails(productId);
+        return;
+      }
+
+      if (!isAuthenticated()) {
+        window.location.href = `login.html?returnUrl=${encodeURIComponent("shop.html")}`;
+        return;
+      }
+
+      if (target.dataset.action === "add-to-cart") {
+        await requestJson("/customer/cart", {
+          method: "POST",
+          body: JSON.stringify({ productId, quantity: 1 }),
+        });
+        setStatus("shop-status", "Added to cart.", "success");
+      }
+
+      if (target.dataset.action === "preorder") {
+        const pickupDate = prompt("Pickup date (YYYY-MM-DD)");
+        const pickupTime = prompt("Pickup time (HH:MM)");
+        if (!pickupDate || !pickupTime) {
+          setStatus("shop-status", "Pre-order cancelled.", "info");
+          return;
+        }
+        await requestJson("/preorders/create", {
+          method: "POST",
+          body: JSON.stringify({ productId, quantity: 1, pickupDate, pickupTime, notes: "Placed from the storefront" }),
+        });
+        setStatus("shop-status", "Pre-order request created.", "success");
+      }
+    } catch (error) {
+      setStatus("shop-status", error.message || "Action failed", "error");
+    }
+  });
+
+  renderCategories();
+  renderProducts();
+}
+
+async function bindSellerPage() {
+  const dashboardStats = document.getEleme
+function getUserRole() {
+  return authState.user?.role?.toLowerCase() ?? "";
+}
+
+function getAccessToken() {
+  return authState.tokens?.accessToken || "";
+}
+
+async function hydrateAuthSessionFromSupabase() {
+  if (authState.user && authState.tokens?.accessToken) {
+    return authState.user;
+  }
+
+  const {
+    data: { session },
+    error,
+  } = await supabaseClient.auth.getSession();
+
+  if (error || !session?.access_token) {
+    return null;
+  }
+
+  authState.tokens = { accessToken: session.access_token };
+
+  try {
+    const { user } = await requestJson("/auth/me", {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    persistAuthState(user, { accessToken: session.access_token });
+    return user;
+  } catch (meError) {
+    const email = session.user?.email || "";
+    const fullName = session.user?.user_metadata?.full_name || email.split("@")[0] || "Google user";
+    const { user } = await requestJson("/auth/sync", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({
+        fullName,
+        role: "CUSTOMER",
+        phone: "",
+        paymentMethod: "CARD",
+        street: "",
+        city: "",
+        province: "",
+        country: "Zambia",
+        postalCode: "",
+      }),
+    });
+
+    persistAuthState(user, { accessToken: session.access_token });
+    return user;
+  }
+}
+
 // Supabase refreshes the access token in the background on its own timer;
 // mirror that into our storage so getAccessToken() always has a live token
 // without every page needing to know about the refresh.
