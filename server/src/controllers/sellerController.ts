@@ -87,6 +87,12 @@ export const getDashboard = async (req: AuthenticatedRequest, res: Response) => 
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
+    const startOfMonth = new Date(startOfToday);
+    startOfMonth.setDate(1);
+
+    const startOfPreviousMonth = new Date(startOfMonth);
+    startOfPreviousMonth.setMonth(startOfPreviousMonth.getMonth() - 1);
+
     const orderItems = await prisma.orderItem.findMany({
       where: {
         product: { sellerId: seller.id },
@@ -99,23 +105,71 @@ export const getDashboard = async (req: AuthenticatedRequest, res: Response) => 
       },
     });
 
+    const sumBetween = (from: Date, to?: Date) =>
+      orderItems
+        .filter(
+          (item: (typeof orderItems)[number]) =>
+            item.order.createdAt >= from && (!to || item.order.createdAt < to),
+        )
+        .reduce((sum: number, item: (typeof orderItems)[number]) => sum + item.price * item.quantity, 0);
+
     const totalSales = orderItems.reduce((sum: number, item: (typeof orderItems)[number]) => sum + item.price * item.quantity, 0);
-    const todaySales = orderItems
-      .filter((item: (typeof orderItems)[number]) => item.order.createdAt >= startOfToday)
-      .reduce((sum: number, item: (typeof orderItems)[number]) => sum + item.price * item.quantity, 0);
-    const totalProducts = await prisma.product.count({ where: { sellerId: seller.id } });
-    const totalOrders = await prisma.order.count({
-      where: {
-        items: { some: { product: { sellerId: seller.id } } },
-        status: { not: "CANCELLED" },
-      },
-    });
+    const todaySales = sumBetween(startOfToday);
+    const monthSales = sumBetween(startOfMonth);
+    const previousMonthSales = sumBetween(startOfPreviousMonth, startOfMonth);
+    const monthSalesChangePct =
+      previousMonthSales > 0 ? ((monthSales - previousMonthSales) / previousMonthSales) * 100 : null;
+
+    const [
+      totalProducts,
+      totalOrders,
+      activeOrders,
+      pendingOrders,
+      unreadMessages,
+      productsNeedingAttention,
+      outOfStockProducts,
+    ] = await Promise.all([
+      prisma.product.count({ where: { sellerId: seller.id } }),
+      prisma.order.count({
+        where: {
+          items: { some: { product: { sellerId: seller.id } } },
+          status: { not: "CANCELLED" },
+        },
+      }),
+      // "Active" = still moving through the pipeline (not yet delivered, not cancelled).
+      prisma.order.count({
+        where: {
+          items: { some: { product: { sellerId: seller.id } } },
+          status: { in: ["PENDING", "PAID", "SHIPPED"] },
+        },
+      }),
+      prisma.order.count({
+        where: {
+          items: { some: { product: { sellerId: seller.id } } },
+          status: "PENDING",
+        },
+      }),
+      prisma.message.count({ where: { receiverId: userId, isRead: false } }),
+      // "Needs attention" = unavailable OR out of stock (a buyer could still land on it otherwise).
+      prisma.product.count({
+        where: { sellerId: seller.id, OR: [{ isAvailable: false }, { stock: 0 }] },
+      }),
+      prisma.product.count({ where: { sellerId: seller.id, stock: 0 } }),
+    ]);
 
     res.json({
       todaySales,
       totalSales,
       totalProducts,
       totalOrders,
+      monthSales,
+      previousMonthSales,
+      monthSalesChangePct,
+      activeOrders,
+      pendingOrders,
+      unreadMessages,
+      productsNeedingAttention,
+      outOfStockProducts,
     });
   } catch (error) {
     console.error(error);
@@ -337,6 +391,271 @@ export const updateSellerProduct = async (req: AuthenticatedRequest, res: Respon
     }
 
     const existingProduct = await prisma.product.findFirst({ where: { id: productId, sellerId: seller.id } });
+
+    if (!existingProduct) {
+      res.status(404).json({ message: "Product not found" });
+      return;
+    }
+
+    const data: Record<string, unknown> = {};
+
+    if (name) data.name = name.trim();
+    if (typeof description !== "undefined") data.description = description?.trim() ?? "";
+    if (typeof price !== "undefined") data.price = Number(price);
+    if (typeof stock !== "undefined") data.stock = Number(stock);
+    if (typeof isAvailable !== "undefined" && isBooleanValue(isAvailable)) {
+      data.isAvailable = parseBooleanValue(isAvailable);
+    }
+
+    if (typeof req.body.images !== "undefined") {
+      data.images = normalizeImages(req.body.images);
+      data.imageUrl = normalizeImages(req.body.images)[0] ?? existingProduct.imageUrl;
+    }
+
+    if (categoryId || categoryName) {
+      const category = await findOrCreateCategory(categoryId, categoryName);
+      data.categoryId = category.id;
+    }
+
+    const product = await prisma.product.update({
+      where: { id: productId },
+      data,
+    });
+
+    res.json(product);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Unable to update product" });
+  }
+};
+
+export const deleteSellerProduct = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = ensureUserId(req, res);
+    if (!userId) return;
+    const seller = await getSellerProfile(userId);
+    const id = normalizeParam(req.params.id);
+
+    if (!id) {
+      res.status(400).json({ message: "Product id is required" });
+      return;
+    }
+
+    const product = await prisma.product.findFirst({ where: { id, sellerId: seller.id } });
+
+    if (!product) {
+      res.status(404).json({ message: "Product not found" });
+      return;
+    }
+
+    await prisma.product.delete({ where: { id } });
+    res.json({ message: "Product deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Unable to delete product" });
+  }
+};
+
+export const getSellerOrders = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = ensureUserId(req, res);
+    if (!userId) return;
+    const seller = await getSellerProfile(userId);
+    const orders = await prisma.order.findMany({
+      where: {
+        items: { some: { product: { sellerId: seller.id } } },
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        customer: { include: { user: { select: { id: true, fullName: true, email: true } } } },
+        items: { include: { product: true } },
+        payment: true,
+        receipt: true,
+      },
+    });
+
+    res.json(orders);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Unable to load orders" });
+  }
+};
+
+export const getSellerOrderById = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = ensureUserId(req, res);
+    if (!userId) return;
+    const seller = await getSellerProfile(userId);
+    const orderId = normalizeParam(req.params.id);
+
+    if (!orderId) {
+      res.status(400).json({ message: "Order id is required" });
+      return;
+    }
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        customer: { include: { user: { select: { id: true, fullName: true, email: true } } } },
+        items: { include: { product: true } },
+        payment: true,
+        receipt: true,
+      },
+    });
+
+    if (!order || order.items.every((item: (typeof order.items)[number]) => item.product.sellerId !== seller.id)) {
+      res.status(404).json({ message: "Order not found" });
+      return;
+    }
+
+    res.json(order);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Unable to load order" });
+  }
+};
+
+export const getSellerReceipts = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = ensureUserId(req, res);
+    if (!userId) return;
+    const seller = await getSellerProfile(userId);
+    const receipts = await prisma.receipt.findMany({
+      where: {
+        order: { items: { some: { product: { sellerId: seller.id } } } },
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        order: {
+          include: {
+            items: { include: { product: true } },
+            customer: { include: { user: { select: { id: true, fullName: true, email: true } } } },
+            payment: true,
+          },
+        },
+        customer: { include: { user: { select: { id: true, fullName: true, email: true } } } },
+      },
+    });
+
+    res.json(receipts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Unable to load receipts" });
+  }
+};
+
+export const getSellerConversations = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = ensureUserId(req, res);
+    if (!userId) return;
+
+    const messages = await prisma.message.findMany({
+      where: {
+        OR: [{ senderId: userId }, { receiverId: userId }],
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        sender: { select: { id: true, fullName: true, email: true } },
+        receiver: { select: { id: true, fullName: true, email: true } },
+      },
+    });
+
+    res.json(messages);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Unable to load chats" });
+  }
+};
+
+export const getSellerChatWithUser = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = normalizeParam(req.params.userId);
+    if (!userId) {
+      res.status(400).json({ message: "User id is required" });
+      return;
+    }
+
+    const me = ensureUserId(req, res);
+    if (!me) return;
+
+    const messages = await prisma.message.findMany({
+      where: {
+        OR: [
+          { senderId: me, receiverId: userId },
+          { senderId: userId, receiverId: me },
+        ],
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    res.json(messages);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Unable to load chat thread" });
+  }
+};
+
+export const sendSellerMessage = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { receiverId, content } = req.body as { receiverId?: string; content?: string };
+
+    if (!receiverId || !content) {
+      res.status(400).json({ message: "receiverId and content are required" });
+      return;
+    }
+
+    const receiver = await prisma.user.findUnique({ where: { id: receiverId } });
+
+    if (!receiver) {
+      res.status(404).json({ message: "Receiver not found" });
+      return;
+    }
+
+    const me = ensureUserId(req, res);
+    if (!me) return;
+
+    const message = await prisma.message.create({
+      data: {
+        senderId: me,
+        receiverId,
+        content: content.trim(),
+      },
+    });
+
+    res.status(201).json(message);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Unable to send message" });
+  }
+};
+
+export const createSellerCategory = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { name, description } = req.body as { name?: string; description?: string };
+
+    if (!name) {
+      res.status(400).json({ message: "Category name is required" });
+      return;
+    }
+
+    const slug = normalizeSlug(name);
+    const category = await prisma.category.upsert({
+      where: { slug },
+      update: { description: description?.trim() ?? undefined },
+      create: {
+        name: name.trim(),
+        slug,
+        description: description?.trim(),
+      },
+    });
+
+    res.status(201).json(category);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Unable to create category" });
+  }
+};
+.findFirst({ where: { id: productId, sellerId: seller.id } });
 
     if (!existingProduct) {
       res.status(404).json({ message: "Product not found" });
