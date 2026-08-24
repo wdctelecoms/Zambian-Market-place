@@ -1,77 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Seller Dashboard — Zambian Marketplace</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div class="container">
-      <header class="page-header">
-        <div class="brand">
-          <a href="index.html"><img src="assets/logo.png" class="logo-img" alt="Zambian Marketplace" /></a>
-          <div>
-            <h1 class="page-title">Seller Dashboard</h1>
-            <p class="page-description">Manage products, view orders, and connect with customers in one place.</p>
-          </div>
-        </div>
-        <nav class="header-nav">
-          <a href="index.html">Home</a>
-          <a href="shop.html">Shop</a>
-          <a href="cart.html">Cart</a>
-          <a href="chat.html">Chat</a>
-          <a href="login.html" data-action="logout">Logout</a>
-        </nav>
-      </header>
-
-      <section class="card" style="margin-bottom: 1.5rem;">
-        <div id="dashboard-status" class="status-message" aria-live="polite"></div>
-      </section>
-
-      <section id="dashboard-stats" class="grid grid-2"></section>
-
-      <section class="card" style="margin-top: 1.5rem;">
-        <h2>Add a new product</h2>
-        <form id="seller-product-form" class="grid grid-2">
-          <div class="input-group">
-            <label for="product-name">Product name</label>
-            <input id="product-name" type="text" placeholder="E.g. Groundnuts" required />
-          </div>
-          <div class="input-group">
-            <label for="product-price">Price (ZMW)</label>
-            <input id="product-price" type="number" placeholder="00.00" required />
-          </div>
-          <div class="input-group">
-            <label for="product-stock">Stock quantity</label>
-            <input id="product-stock" type="number" placeholder="10" required />
-          </div>
-          <div class="input-group">
-            <label for="product-image">Image URL</label>
-            <input id="product-image" type="text" placeholder="https://..." />
-          </div>
-          <div class="input-group">
-            <label for="product-category">Category</label>
-            <input id="product-category" type="text" placeholder="Fresh produce" />
-          </div>
-          <div class="input-group" style="grid-column: span 2;">
-            <label for="product-description">Description</label>
-            <textarea id="product-description" placeholder="A short description of this product." required></textarea>
-          </div>
-          <button type="submit">Create product</button>
-        </form>
-      </section>
-
-      <section class="card" style="margin-top: 1.5rem;">
-        <h2>Your listed products</h2>
-        <div id="seller-products" class="grid grid-3"></div>
-      </section>
-
-      <footer class="footer-note">
-        Your marketplace dashboard for listing products and staying connected with buyers.
-      </footer>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Seller dashboard for Zambian Marketplace." />
+  <title>Seller Dashboard · Zambian Marketplace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{--p900:#1F2A24;--p800:#26362D;--p700:#3C4F44;--p500:#5F7A6B;--p100:#E8EEEA;--accent:#A6794B;--bg:#F4F6F5;--surface:#fff;--ink:#1C2521;--soft:#4F5E56;--faint:#7B8A82;--border:#DDE2DF;--danger:#9E4A3A;--shadow:0 4px 16px rgba(0,0,0,.05);--r:10px;--display:'Source Serif 4',Georgia,serif;--body:'Inter',system-ui,sans-serif}
+    *{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--body);-webkit-font-smoothing:antialiased}.app{display:flex;min-height:100vh}.sidebar{width:260px;background:var(--p900);color:#eae deb; padding:24px 16px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}.brand{display:flex;align-items:center;gap:10px;padding:0 6px 24px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:20px}.logo{width:34px;height:34px;border-radius:7px;object-fit:contain;background:var(--p500);padding:5px}.brand strong{font:600 16px var(--display);color:#f0f3f1}.nav-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:rgba(234,237,235,.35);margin:16px 8px 6px}.nav a{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:6px;color:rgba(234,237,235,.7);text-decoration:none;font-weight:500;margin-bottom:2px}.nav a:hover,.nav a.active{background:rgba(255,255,255,.1);color:#fff}.sidebar-footer{margin-top:auto;border-top:1px solid rgba(255,255,255,.08);padding-top:16px;color:rgba(234,237,235,.65);font-size:12px}.main{flex:1;min-width:0;padding:28px 34px 60px;max-width:1400px}.topbar{display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;margin-bottom:28px}.topbar a{color:var(--soft);text-decoration:none;font-weight:600;font-size:13px}.welcome{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:24px}.welcome h1{font:600 25px var(--display)}.welcome p{color:var(--soft);margin-top:4px}.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;margin-bottom:20px}.card h2{font:600 17px var(--display);margin-bottom:14px}.status-message{min-height:20px;color:var(--soft)}.status-success{color:#3d6953}.status-error{color:var(--danger)}.grid{display:grid;gap:16px}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.input-group{display:flex;flex-direction:column;gap:6px}.input-group label{font-size:12px;font-weight:600;color:var(--soft)}input,textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px 12px;background:#f7f9f8;color:var(--ink);font:13px var(--body);outline:none}input:focus,textarea:focus{border-color:var(--p500);box-shadow:0 0 0 3px rgba(95,122,107,.08);background:#fff}textarea{min-height:100px;resize:vertical}button{background:var(--p800);color:#fff;border:0;border-radius:6px;padding:10px 16px;font:600 13px var(--body);cursor:pointer}button:hover{background:var(--p700)}#seller-product-form button{width:max-content}.seller-product-card{border:1px solid var(--border);border-radius:8px;padding:15px;background:#fff}.seller-product-card img{width:100%;height:150px;object-fit:cover;border-radius:6px;margin-bottom:10px}.seller-product-card h3{font-size:14px}.footer-note{text-align:center;color:var(--faint);font-size:12px;padding:20px}.mobile-nav{display:none}@media(max-width:900px){.sidebar{display:none}.mobile-nav{display:flex;gap:8px;overflow:auto;margin-bottom:18px}.mobile-nav a{white-space:nowrap;background:#fff;border:1px solid var(--border);padding:8px 12px;border-radius:6px;text-decoration:none;color:var(--soft);font-size:12px}.main{padding:20px 16px}.grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.grid-2,.grid-3{grid-template-columns:1fr}.topbar{display:none}.welcome h1{font-size:22px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><img src="assets/logo.png" class="logo" alt="Zambian Marketplace"><strong>Zambian Marketplace</strong></div>
+    <div class="nav-label">Marketplace</div>
+    <nav class="nav">
+      <a href="shop.html">🛍 Shop</a><a href="cart.html">🛒 Cart</a><a href="chat.html">💬 Chat</a><a class="active" href="seller.html">🏪 Seller Dashboard</a>
+    </nav>
+    <div class="nav-label">Account</div>
+    <nav class="nav"><a href="index.html">⌂ Home</a><a href="login.html" data-action="logout">↪ Logout</a></nav>
+    <div class="sidebar-footer">Live marketplace data powered by your connected account.</div>
+  </aside>
+  <main class="main">
+    <nav class="mobile-nav"><a href="shop.html">Shop</a><a href="cart.html">Cart</a><a href="chat.html">Chat</a><a href="seller.html">Seller</a><a href="login.html" data-action="logout">Logout</a></nav>
+    <div class="topbar"><span>Seller workspace</span><a href="shop.html">View marketplace →</a></div>
+    <section class="welcome"><div><h1>Seller Dashboard</h1><p>Manage your products, inventory and customer activity.</p></div></section>
+    <section class="card"><div id="dashboard-status" class="status-message" aria-live="polite">Loading your seller data…</div></section>
+    <section id="dashboard-stats" class="grid grid-2"></section>
+    <section class="card"><h2>Add a new product</h2><form id="seller-product-form" class="grid grid-2">
+      <div class="input-group"><label for="product-name">Product name</label><input id="product-name" type="text" placeholder="E.g. Groundnuts" required></div>
+      <div class="input-group"><label for="product-price">Price (ZMW)</label><input id="product-price" type="number" min="0" step="0.01" placeholder="00.00" required></div>
+      <div class="input-group"><label for="product-stock">Stock quantity</label><input id="product-stock" type="number" min="0" placeholder="10" required></div>
+      <div class="input-group"><label for="product-image">Image URL</label><input id="product-image" type="url" placeholder="https://..."></div>
+      <div class="input-group"><label for="product-category">Category</label><input id="product-category" type="text" placeholder="Fresh produce"></div>
+      <div class="input-group" style="grid-column:1/-1"><label for="product-description">Description</label><textarea id="product-description" placeholder="A short description of this product." required></textarea></div>
+      <div><button type="submit">＋ Create product</button></div>
+    </form></section>
+    <section class="card"><h2>Your listed products</h2><div id="seller-products" class="grid grid-3"></div></section>
+    <footer class="footer-note">Your seller data is loaded through the marketplace backend and Supabase authentication.</footer>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="app.js"></script>
-  </body>
+</body>
 </html>
