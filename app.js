@@ -560,7 +560,155 @@ function bindShopPage() {
 }
 
 async function bindSellerPage() {
-  const dashboardStats = document.getEleme
+  const dashboardStats = document.getElementById("dashboard-stats");
+  const sellerProducts = document.getElementById("seller-products");
+  const form = document.getElementById("seller-product-form");
+  const categorySelect = document.getElementById("product-category");
+  const cancelEditButton = document.getElementById("cancel-edit");
+  const submitButton = document.getElementById("seller-product-submit");
+  if (!dashboardStats || !sellerProducts) return;
+
+  const loadCategoryOptions = async () => {
+    if (!categorySelect) return;
+    try {
+      const categories = await requestJson("/public/categories");
+      categorySelect.innerHTML = categories
+        .map((category) => `<option value="${category.slug}">${category.name}</option>`)
+        .join("");
+    } catch {
+      categorySelect.innerHTML = '<option value="">General</option>';
+    }
+  };
+
+  if (form && form.dataset.bound !== "true") {
+    form.dataset.bound = "true";
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const productId = document.getElementById("product-id").value.trim();
+      const payload = {
+        name: document.getElementById("product-name").value.trim(),
+        description: document.getElementById("product-description").value.trim(),
+        price: Number(document.getElementById("product-price").value),
+        stock: Number(document.getElementById("product-stock").value),
+        imageUrl: document.getElementById("product-image").value.trim(),
+        categoryName: categorySelect?.value || "General",
+      };
+
+      try {
+        setStatus("dashboard-status", productId ? "Updating product..." : "Creating product...", "info");
+        await requestJson(productId ? `/seller/products/${productId}` : "/seller/products", {
+          method: productId ? "PATCH" : "POST",
+          body: JSON.stringify(payload),
+        });
+        form.reset();
+        if (cancelEditButton) cancelEditButton.style.display = "none";
+        if (submitButton) submitButton.textContent = "Create product";
+        await bindSellerPage();
+      } catch (error) {
+        setStatus("dashboard-status", error.message || "Unable to save product", "error");
+      }
+    });
+  }
+
+  if (cancelEditButton && cancelEditButton.dataset.bound !== "true") {
+    cancelEditButton.dataset.bound = "true";
+    cancelEditButton.addEventListener("click", () => {
+      form.reset();
+      document.getElementById("product-id").value = "";
+      cancelEditButton.style.display = "none";
+      if (submitButton) submitButton.textContent = "Create product";
+    });
+  }
+
+  if (!isAuthenticated()) {
+    setStatus("dashboard-status", "Please login as a seller to manage your store.", "error");
+    dashboardStats.innerHTML = '<div class="empty-state">Sign in to view dashboard metrics.</div>';
+    sellerProducts.innerHTML = '<div class="empty-state">No products to display yet.</div>';
+    return;
+  }
+
+  if (getUserRole() !== "seller") {
+    setStatus("dashboard-status", "You need a seller account to open this dashboard.", "error");
+    dashboardStats.innerHTML = '<div class="empty-state">Switch to a seller account to view dashboard metrics.</div>';
+    sellerProducts.innerHTML = '<div class="empty-state">No products to display yet.</div>';
+    return;
+  }
+
+  try {
+    await loadCategoryOptions();
+    setStatus("dashboard-status", "Loading seller dashboard...", "info");
+    const [dashboard, products] = await Promise.all([requestJson("/seller/dashboard"), requestJson("/seller/products")]);
+
+    dashboardStats.innerHTML = `
+      <article class="card">
+        <h2>Today</h2>
+        <p class="product-card-price">${formatCurrency(dashboard.todaySales)}</p>
+        <p class="text-muted">Sales recorded today</p>
+      </article>
+      <article class="card">
+        <h2>Overview</h2>
+        <p class="product-card-price">${formatCurrency(dashboard.totalSales)}</p>
+        <p class="text-muted">${dashboard.totalProducts} active products • ${dashboard.totalOrders} orders</p>
+      </article>
+    `;
+
+    sellerProducts.innerHTML = products.length
+      ? products
+          .map(
+            (product) => `
+              <article class="card">
+                <h3>${product.name}</h3>
+                <p class="text-muted">${product.description}</p>
+                <p class="product-card-price">${formatCurrency(product.price)}</p>
+                <p class="text-muted">Stock: ${product.stock} • ${product.isAvailable ? "Available" : "Unavailable"}</p>
+                <div class="product-actions">
+                  <button type="button" data-action="edit-product" data-product-id="${product.id}">Edit</button>
+                  <button type="button" class="button-secondary" data-action="delete-product" data-product-id="${product.id}">Delete</button>
+                </div>
+              </article>
+            `,
+          )
+          .join("")
+      : '<div class="empty-state">No products listed yet.</div>';
+
+    sellerProducts.addEventListener("click", async (event) => {
+      const target = event.target.closest("button");
+      if (!target) return;
+      const productId = target.dataset.productId;
+      if (!productId) return;
+
+      try {
+        if (target.dataset.action === "delete-product") {
+          await requestJson(`/seller/products/${productId}`, { method: "DELETE" });
+          await bindSellerPage();
+          setStatus("dashboard-status", "Product deleted.", "success");
+          return;
+        }
+
+        if (target.dataset.action === "edit-product") {
+          const product = await requestJson(`/seller/products/${productId}`);
+          document.getElementById("product-id").value = product.id;
+          document.getElementById("product-name").value = product.name;
+          document.getElementById("product-description").value = product.description || "";
+          document.getElementById("product-price").value = product.price;
+          document.getElementById("product-stock").value = product.stock;
+          document.getElementById("product-image").value = product.imageUrl || "";
+          categorySelect.value = product.category?.slug || categorySelect.value;
+          if (cancelEditButton) cancelEditButton.style.display = "inline-block";
+          if (submitButton) submitButton.textContent = "Update product";
+          setStatus("dashboard-status", "Product loaded for editing.", "success");
+        }
+      } catch (error) {
+        setStatus("dashboard-status", error.message || "Unable to update seller product", "error");
+      }
+    });
+
+    setStatus("dashboard-status", "Dashboard ready.", "success");
+  } catch (error) {
+    setStatus("dashboard-status", error.message || "Unable to load seller dashboard", "error");
+  }
+}
+
 function getUserRole() {
   return authState.user?.role?.toLowerCase() ?? "";
 }
@@ -644,15 +792,6 @@ function setStatus(elementId, message, type = "info") {
   target.className = `status-message ${type === "error" ? "status-error" : type === "success" ? "status-success" : ""}`.trim();
 }
 
-function redirectAfterAuth(user) {
-  const role = user?.role;
-  if (role === "SELLER") {
-    window.location.href = "seller.html";
-    return;
-  }
-
-  window.location.href = MAIN_APP_SHOP_URL;
-}
 
 async function requestJson(path, options = {}) {
   const doFetch = () => {
@@ -704,32 +843,6 @@ function bindLogoutLinks() {
   });
 }
 
-function bindLoginForm() {
-  const form = document.getElementById("login-form");
-  if (!form) return;
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-
-    try {
-      setStatus("form-status", "Signing you in...", "info");
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-
-      const { user } = await requestJson("/auth/me", {
-        headers: { Authorization: `Bearer ${data.session.access_token}` },
-      });
-
-      persistAuthState(user, { accessToken: data.session.access_token });
-      setStatus("form-status", "Login successful. Redirecting...", "success");
-      setTimeout(() => redirectAfterAuth(user), 350);
-    } catch (error) {
-      setStatus("form-status", error.message || "Unable to login", "error");
-    }
-  });
-}
 
 function bindGoogleOAuthButton() {
   const button = document.getElementById("google-oauth-button");
@@ -752,52 +865,6 @@ function bindGoogleOAuthButton() {
   });
 }
 
-function bindRegisterForm() {
-  const form = document.getElementById("register-form");
-  if (!form) return;
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const fullName = document.getElementById("full-name").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    const role = document.getElementById("role").value;
-    const phone = document.getElementById("phone").value.trim();
-
-    try {
-      setStatus("form-status", "Creating your account...", "info");
-      const { data, error } = await supabaseClient.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: MAIN_APP_SHOP_URL,
-        },
-      });
-      if (error) throw error;
-
-      if (!data.session) {
-        setStatus(
-          "form-status",
-          "Account created. Check your email to confirm before logging in.",
-          "success",
-        );
-        return;
-      }
-
-      const { user } = await requestJson("/auth/sync", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${data.session.access_token}` },
-        body: JSON.stringify({ fullName, role, phone }),
-      });
-
-      persistAuthState(user, { accessToken: data.session.access_token });
-      setStatus("form-status", "Account created. Redirecting...", "success");
-      setTimeout(() => redirectAfterAuth(user), 350);
-    } catch (error) {
-      setStatus("form-status", error.message || "Unable to register", "error");
-    }
-  });
-}
 
 function bindShopPage() {
   const searchForm = document.getElementById("shop-search-form");
