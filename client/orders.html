@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Orders — Zambian Marketplace</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="page-header">
+      <div class="brand"><a href="index.html"><img src="../assets/logo.png" class="logo-img" alt="Zambian Marketplace" /></a><div><h1 class="page-title">My Orders</h1><p class="page-description">Track orders and their database-backed status.</p></div></div>
+      <nav class="header-nav"><a href="index.html">Home</a><a href="shop.html">Shop</a><a href="cart.html">Cart</a><a href="chat.html">Chat</a></nav>
+    </header>
+    <section class="card"><div id="orders-status" class="status-message" aria-live="polite"></div><div id="orders-list" class="grid"></div></section>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="app.js"></script>
+  <script src="orders.js"></script>
+</body>
+</html>

@@ -11,9 +11,7 @@
       <div class="intro-card">
         <p class="intro-badge">Welcome to</p>
         <h1>Zambian Marketplace</h1>
-        <p>
-          Discover local products, connect with trusted sellers, and pre-order the essentials you need from across Zambia.
-        </p>
+        <p>Discover local products, connect with trusted sellers, and pre-order what you need from across Zambia.</p>
         <button id="enter-btn">Explore the marketplace</button>
       </div>
     </div>
@@ -33,47 +31,37 @@
         </nav>
       </header>
 
+      <section class="grid grid-3" style="margin-top: 1.5rem;">
+        <article class="card"><h3>Live products</h3><p class="product-card-price" data-stat="productCount">—</p></article>
+        <article class="card"><h3>Active categories</h3><p class="product-card-price" data-stat="categoryCount">—</p></article>
+        <article class="card"><h3>Active sellers</h3><p class="product-card-price" data-stat="sellerCount">—</p></article>
+      </section>
+
       <section class="card" style="margin-top: 1.5rem;">
         <div id="home-status" class="status-message" aria-live="polite"></div>
+        <div data-live-status class="status-message">Live marketplace feed enabled.</div>
         <h2>Browse the live marketplace</h2>
         <div id="home-products" class="grid grid-3" style="margin-top: 1rem;"></div>
       </section>
 
       <section class="card" style="margin-top: 1.5rem;">
-        <h2>Featured categories</h2>
+        <h2>Live categories</h2>
         <div id="home-categories" class="grid grid-3" style="margin-top: 1rem;"></div>
       </section>
 
-      <footer class="footer-note">
-        Built for Zambian sellers and customers — simple, clean, and mobile friendly.
-      </footer>
+      <footer class="footer-note">Built for Zambian sellers and customers — simple, clean, and mobile friendly.</footer>
     </div>
 
     <script>
       const introScreen = document.getElementById('intro-screen');
       const enterButton = document.getElementById('enter-btn');
-
-      const hideIntro = () => {
-        introScreen.classList.add('hidden');
-        document.body.classList.remove('intro-open');
-      };
-
-      window.addEventListener('load', () => {
-        document.body.classList.add('intro-open');
-        requestAnimationFrame(() => introScreen.classList.add('visible'));
-      });
-
+      const hideIntro = () => { introScreen.classList.add('hidden'); document.body.classList.remove('intro-open'); };
+      window.addEventListener('load', () => { document.body.classList.add('intro-open'); requestAnimationFrame(() => introScreen.classList.add('visible')); });
       enterButton.addEventListener('click', hideIntro);
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          hideIntro();
-        }
-      });
+      document.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') hideIntro(); });
     </script>
-  <body>
-    <div style="padding:24px;">
-      <a href="index.html"><img src="../assets/logo.png" alt="Zambian Marketplace" style="width:88px;height:auto;display:block;margin-bottom:12px;" /></a>
-      <p>Redirecting to the marketplace landing page...</p>
-      <p>If you are not redirected, <a href="/intro.html">click here</a>.</p>
-    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="app.js"></script>
+    <script src="realtime.js"></script>
   </body>
+</html>

@@ -1,79 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Seller Dashboard — Zambian Marketplace</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
+  <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Seller Dashboard — Zambian Marketplace</title><link rel="stylesheet" href="styles.css" /></head>
   <body>
     <div class="container">
       <header class="page-header">
-        <div class="brand">
-          <a href="index.html"><img src="../assets/logo.png" class="logo-img" alt="Zambian Marketplace" /></a>
-          <div>
-            <h1 class="page-title">Seller Dashboard</h1>
-            <p class="page-description">Manage products, view orders, and connect with customers in one place.</p>
-          </div>
-        </div>
-        <nav class="header-nav">
-          <a href="index.html">Home</a>
-          <a href="shop.html">Shop</a>
-          <a href="cart.html">Cart</a>
-          <a href="chat.html">Chat</a>
-          <a href="login.html" data-action="logout">Logout</a>
-        </nav>
+        <div class="brand"><a href="index.html"><img src="../assets/logo.png" class="logo-img" alt="Zambian Marketplace" /></a><div><h1 class="page-title">Seller Dashboard</h1><p class="page-description">Manage live products, inventory, orders, sales and customer conversations.</p></div></div>
+        <nav class="header-nav"><a href="index.html">Home</a><a href="shop.html">Shop</a><a href="cart.html">Cart</a><a href="chat.html">Chat</a><a href="login.html" data-action="logout">Logout</a></nav>
       </header>
-
-      <section class="card" style="margin-bottom: 1.5rem;">
-        <div id="dashboard-status" class="status-message" aria-live="polite"></div>
-      </section>
-
+      <section class="card" style="margin-bottom:1.5rem;"><div data-live-status class="status-message">Live seller data enabled.</div><div id="dashboard-status" class="status-message" aria-live="polite"></div></section>
       <section id="dashboard-stats" class="grid grid-2"></section>
-
-      <section class="card" style="margin-top: 1.5rem;">
+      <section class="card" style="margin-top:1.5rem;">
         <h2>Add a new product</h2>
         <form id="seller-product-form" class="grid grid-2">
           <input id="product-id" type="hidden" />
-          <div class="input-group">
-            <label for="product-name">Product name</label>
-            <input id="product-name" type="text" placeholder="E.g. Groundnuts" required />
-          </div>
-          <div class="input-group">
-            <label for="product-price">Price (ZMW)</label>
-            <input id="product-price" type="number" placeholder="00.00" required />
-          </div>
-          <div class="input-group">
-            <label for="product-stock">Stock quantity</label>
-            <input id="product-stock" type="number" placeholder="10" required />
-          </div>
-          <div class="input-group">
-            <label for="product-image">Image URL</label>
-            <input id="product-image" type="text" placeholder="https://..." />
-          </div>
-          <div class="input-group">
-            <label for="product-category">Category</label>
-            <select id="product-category"></select>
-          </div>
-          <div class="input-group" style="grid-column: span 2;">
-            <label for="product-description">Description</label>
-            <textarea id="product-description" placeholder="A short description of this product." required></textarea>
-          </div>
-          <button type="submit" id="seller-product-submit">Create product</button>
-          <button type="button" id="cancel-edit" class="button-secondary" style="display:none;">Cancel edit</button>
+          <div class="input-group"><label for="product-name">Product name</label><input id="product-name" type="text" placeholder="Product name" required /></div>
+          <div class="input-group"><label for="product-price">Price (ZMW)</label><input id="product-price" type="number" min="0" step="0.01" required /></div>
+          <div class="input-group"><label for="product-stock">Stock quantity</label><input id="product-stock" type="number" min="0" required /></div>
+          <div class="input-group"><label for="product-image">Image URL</label><input id="product-image" type="url" placeholder="https://..." /></div>
+          <div class="input-group"><label for="product-category">Category</label><select id="product-category"></select></div>
+          <div class="input-group" style="grid-column:span 2;"><label for="product-description">Description</label><textarea id="product-description" placeholder="Describe the product." required></textarea></div>
+          <button type="submit" id="seller-product-submit">Create product</button><button type="button" id="cancel-edit" class="button-secondary" style="display:none;">Cancel edit</button>
         </form>
       </section>
-
-      <section class="card" style="margin-top: 1.5rem;">
-        <h2>Your listed products</h2>
-        <div id="seller-products" class="grid grid-3"></div>
-      </section>
-
-      <footer class="footer-note">
-        Your marketplace dashboard for listing products and staying connected with buyers.
-      </footer>
+      <section class="card" style="margin-top:1.5rem;"><h2>Your listed products</h2><div id="seller-products" class="grid grid-3"></div></section>
+      <footer class="footer-note">Seller data is read directly from the marketplace database.</footer>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="app.js"></script>
+    <script src="app.js"></script>
+    <script src="realtime.js"></script>
   </body>
 </html>

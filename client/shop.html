@@ -11,56 +11,29 @@
       <header class="page-header">
         <div class="brand">
           <a href="index.html"><img src="../assets/logo.png" class="logo-img" alt="Zambian Marketplace" /></a>
-          <div>
-            <h1 class="page-title">Shop</h1>
-            <p class="page-description">Explore products by category, search for sellers, and view detailed listings.</p>
-          </div>
+          <div><h1 class="page-title">Shop</h1><p class="page-description">Explore live products from sellers on the Zambian Marketplace.</p></div>
         </div>
-        <nav class="header-nav">
-          <a href="index.html">Home</a>
-          <a href="seller.html">Seller Dashboard</a>
-          <a href="cart.html">Cart</a>
-          <a href="chat.html">Chat</a>
-          <a href="login.html" data-action="logout">Logout</a>
-        </nav>
+        <nav class="header-nav"><a href="index.html">Home</a><a href="seller.html">Seller Dashboard</a><a href="cart.html">Cart</a><a href="chat.html">Chat</a><a href="login.html" data-action="logout">Logout</a></nav>
       </header>
-
-      <section class="card" style="margin-bottom: 1.5rem;">
+      <section class="card" style="margin-bottom:1.5rem;">
+        <div data-live-status class="status-message" aria-live="polite">Connected to live marketplace data.</div>
         <h2>Search the marketplace</h2>
         <form id="shop-search-form" class="grid grid-2">
-          <div class="input-group">
-            <label for="search">Search products, shops, or categories</label>
-            <input id="search" type="search" placeholder="Search for maize, soap, bakeries..." />
-          </div>
-          <div class="input-group">
-            <label for="category-filter">Category</label>
-            <select id="category-filter">
-              <option value="">All categories</option>
-            </select>
-          </div>
-          <div class="input-group">
-            <label for="min-price">Min price</label>
-            <input id="min-price" type="number" min="0" step="0.01" placeholder="0" />
-          </div>
-          <div class="input-group">
-            <label for="max-price">Max price</label>
-            <input id="max-price" type="number" min="0" step="0.01" placeholder="5000" />
-          </div>
-          <div class="input-group" style="align-self: end;">
-            <button type="submit">Search</button>
-          </div>
+          <div class="input-group"><label for="search">Search products, shops, or categories</label><input id="search" type="search" placeholder="Search products..." /></div>
+          <div class="input-group"><label for="category-filter">Category</label><select id="category-filter"><option value="">All categories</option></select></div>
+          <div class="input-group"><label for="min-price">Min price</label><input id="min-price" type="number" min="0" step="0.01" placeholder="0" /></div>
+          <div class="input-group"><label for="max-price">Max price</label><input id="max-price" type="number" min="0" step="0.01" placeholder="5000" /></div>
+          <div class="input-group" style="align-self:end;"><button type="submit">Search</button></div>
         </form>
         <div id="shop-status" class="status-message" aria-live="polite"></div>
       </section>
-
-      <section id="product-details" class="card" style="margin-bottom: 1.5rem; display: none;"></section>
+      <section id="product-details" class="card" style="margin-bottom:1.5rem;display:none;"></section>
       <section id="products-grid" class="grid grid-3"></section>
-
-      <footer class="footer-note">
-        Keep shopping locally and support Zambian sellers.
-      </footer>
+      <footer class="footer-note">Keep shopping locally and support Zambian sellers.</footer>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="app.js"></script>
+    <script src="app.js"></script>
+    <script src="realtime.js"></script>
+    <script src="reviews.js"></script>
   </body>
 </html>
