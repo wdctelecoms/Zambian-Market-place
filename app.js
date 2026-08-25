@@ -1257,6 +1257,9 @@ async function initializePage() {
   const currentPage = window.location.pathname.split("/").pop() || "index.html";
   const user = await hydrateAuthSessionFromSupabase().catch(() => null);
 
+  // Authenticate before rendering protected marketplace pages.
+  if (redirectToLoginIfNeeded()) return;
+
   // Block direct access to authenticated marketplace pages.
   // Supabase session hydration runs first so a valid session is accepted.
   if (redirectToLoginIfNeeded()) return;
