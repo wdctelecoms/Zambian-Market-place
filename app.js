@@ -95,7 +95,7 @@ function getReturnUrl() {
 
   try {
     const parsed = new URL(raw, window.location.origin);
-    const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "dashboard.html"]);
+    const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html"]);
     if (allowedPages.has(parsed.pathname.split("/").pop() || "")) {
       return parsed.pathname.replace(/^\//, "");
     }
@@ -107,7 +107,7 @@ function getReturnUrl() {
 }
 
 function redirectToLoginIfNeeded() {
-  const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "dashboard.html"]);
+  const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html"]);
   const currentPage = window.location.pathname.split("/").pop() || "index.html";
 
   if (!protectedPages.has(currentPage) || isAuthenticated()) {
@@ -315,7 +315,7 @@ function bindGoogleOAuthButton() {
       const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: new URL("login.html", window.location.href).href,
         },
       });
       if (error) throw error;
@@ -855,7 +855,7 @@ function bindGoogleOAuthButton() {
       const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: new URL("login.html", window.location.href).href,
         },
       });
       if (error) throw error;
@@ -1256,6 +1256,10 @@ async function bindChatPage() {
 async function initializePage() {
   const currentPage = window.location.pathname.split("/").pop() || "index.html";
   const user = await hydrateAuthSessionFromSupabase().catch(() => null);
+
+  // Block direct access to authenticated marketplace pages.
+  // Supabase session hydration runs first so a valid session is accepted.
+  if (redirectToLoginIfNeeded()) return;
 
   if (user && (currentPage === "login.html" || currentPage === "register.html")) {
     redirectAfterAuth(user);
