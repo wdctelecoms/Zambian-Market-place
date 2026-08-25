@@ -9,6 +9,13 @@ This project now connects the core marketplace pages to the backend API:
 - Cart page loads the customer's cart from the API
 - Chat page loads conversations and sends messages
 
+## Authentication
+
+- Login, registration, and Google OAuth use Supabase Auth.
+- Protected marketplace pages require an active authenticated session.
+- Direct access to protected pages redirects unauthenticated users to `login.html`.
+- The authentication session is refreshed through Supabase and mirrored into the marketplace session storage.
+
 ## Run locally
 
 1. Copy the example environment file and fill in your real Supabase/Postgres values:
