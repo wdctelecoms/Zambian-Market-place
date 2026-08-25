@@ -1,0 +1,50 @@
+name: Apply direct Supabase auth runtime
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  auth-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inject Supabase auth runtime
+        shell: python
+        run: |
+          from pathlib import Path
+          pages = {
+              'login.html','register.html','shop.html','cart.html','seller.html',
+              'chat.html','account.html','checkout.html','orders.html'
+          }
+          supabase = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>'
+          runtime = '<script src="auth-runtime.js"></script>'
+          for name in pages:
+              p = Path(name)
+              if not p.exists():
+                  continue
+              text = p.read_text(encoding='utf-8')
+              if 'auth-runtime.js' in text:
+                  continue
+              marker = '</head>'
+              injection = supabase + '\n' + runtime + '\n'
+              if marker in text:
+                  text = text.replace(marker, injection + marker, 1)
+              else:
+                  text = text.replace('</body>', injection + '</body>', 1)
+              p.write_text(text, encoding='utf-8')
+      - name: Commit auth runtime wiring
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add login.html register.html shop.html cart.html seller.html chat.html account.html checkout.html orders.html
+          if git diff --cached --quiet; then
+            echo "Auth runtime already wired."
+            exit 0
+          fi
+          git commit -m "Wire direct Supabase auth into login and protected pages"
+          git push
