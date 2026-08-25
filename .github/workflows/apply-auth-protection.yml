@@ -31,21 +31,21 @@ jobs:
           new_protected = 'const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html"]);'
           text = text.replace(old_protected, new_protected)
 
-          old_init = '  const user = await hydrateAuthSessionFromSupabase().catch(() => null);\n\n  if (user && (currentPage === "login.html" || currentPage === "register.html")) {'
-          new_init = '  const user = await hydrateAuthSessionFromSupabase().catch(() => null);\n\n  // Block direct access to authenticated marketplace pages.\n  // Supabase session hydration runs first so a valid session is accepted.\n  if (redirectToLoginIfNeeded()) return;\n\n  if (user && (currentPage === "login.html" || currentPage === "register.html")) {'
-          if old_init not in text:
-              raise SystemExit('Could not find initializePage insertion point in app.js')
-          text = text.replace(old_init, new_init, 1)
+          marker = '  const user = await hydrateAuthSessionFromSupabase().catch(() => null);\n\n'
+          guard = '  // Authenticate before rendering protected marketplace pages.\n  if (redirectToLoginIfNeeded()) return;\n\n'
+          if marker in text and guard not in text:
+              text = text.replace(marker, marker + guard, 1)
 
-          old_google = 'redirectTo: window.location.origin,'
-          new_google = 'redirectTo: new URL("login.html", window.location.href).href,'
-          text = text.replace(old_google, new_google)
-
+          text = text.replace(
+              'redirectTo: window.location.origin,',
+              'redirectTo: new URL("login.html", window.location.href).href,'
+          )
           app.write_text(text, encoding='utf-8')
 
+          # All authenticated pages must load the shared auth/session code.
           protected = ['shop.html', 'cart.html', 'chat.html', 'seller.html', 'account.html']
-          supabase = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>'
-          app_script = '<script src="app.js"></script>'
+          supabase_tag = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>'
+          app_tag = '<script src="app.js"></script>'
 
           for name in protected:
               p = Path(name)
@@ -53,10 +53,23 @@ jobs:
                   continue
               html = p.read_text(encoding='utf-8')
               if 'src="app.js"' not in html:
-                  html = html.replace('</body>', f'{supabase}\n{app_script}\n</body>')
+                  html = html.replace('</body>', f'{supabase_tag}\n{app_tag}\n</body>')
               elif 'supabase-js@2' not in html:
-                  html = html.replace('<script src="app.js"></script>', f'{supabase}\n{app_script}')
+                  html = html.replace(app_tag, f'{supabase_tag}\n{app_tag}')
               p.write_text(html, encoding='utf-8')
+
+          # shop.html has its own legacy dashboard script. Its old client
+          # declaration shadows the global Supabase library and throws a
+          # ReferenceError. Keep the existing UI but initialize the client
+          # from window.supabase so the page can coexist with app.js.
+          shop = Path('shop.html')
+          if shop.exists():
+              html = shop.read_text(encoding='utf-8')
+              html = html.replace(
+                  "const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);",
+                  "const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);"
+              )
+              shop.write_text(html, encoding='utf-8')
 
       - name: Commit changes
         run: |
@@ -67,5 +80,5 @@ jobs:
             echo "No authentication changes needed."
             exit 0
           fi
-          git commit -m "Connect login to marketplace and protect authenticated pages"
+          git commit -m "Fix marketplace authentication and shop Supabase client"
           git push
