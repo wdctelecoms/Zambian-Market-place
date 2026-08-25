@@ -1,0 +1,31 @@
+name: Add seller CTA to shop
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  inject:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inject seller button script
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('shop.html')
+          if not p.exists(): raise SystemExit('shop.html not found')
+          s = p.read_text(encoding='utf-8')
+          tag = '<script src="shop-seller-link.js"></script>'
+          if tag not in s:
+              s = s.replace('</body>', tag + '\n</body>')
+              p.write_text(s, encoding='utf-8')
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add shop.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Add seller dashboard CTA to shop page'
+          git push
