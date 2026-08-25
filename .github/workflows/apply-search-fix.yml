@@ -1,0 +1,36 @@
+name: Apply marketplace search fix
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  search-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add global search handler to pages
+        shell: python
+        run: |
+          from pathlib import Path
+          tag = '<script src="search-fix.js"></script>'
+          for p in Path('.').glob('*.html'):
+              text = p.read_text(encoding='utf-8')
+              if 'search-fix.js' not in text:
+                  text = text.replace('</body>', f'{tag}\n</body>')
+                  p.write_text(text, encoding='utf-8')
+      - name: Commit search wiring
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add '*.html'
+          if git diff --cached --quiet; then
+            echo "Search wiring already present."
+            exit 0
+          fi
+          git commit -m "Wire search controls across marketplace pages"
+          git push
