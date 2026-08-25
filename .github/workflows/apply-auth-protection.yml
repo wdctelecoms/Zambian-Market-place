@@ -1,0 +1,71 @@
+name: Apply marketplace auth protection
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  protect-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch authentication and protected pages
+        shell: python
+        run: |
+          from pathlib import Path
+
+          app = Path('app.js')
+          text = app.read_text(encoding='utf-8')
+
+          old_set = 'const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "dashboard.html"]);'
+          new_set = 'const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html"]);'
+          text = text.replace(old_set, new_set)
+
+          old_protected = 'const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "dashboard.html"]);'
+          new_protected = 'const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html"]);'
+          text = text.replace(old_protected, new_protected)
+
+          old_init = '  const user = await hydrateAuthSessionFromSupabase().catch(() => null);\n\n  if (user && (currentPage === "login.html" || currentPage === "register.html")) {'
+          new_init = '  const user = await hydrateAuthSessionFromSupabase().catch(() => null);\n\n  // Block direct access to authenticated marketplace pages.\n  // Supabase session hydration runs first so a valid session is accepted.\n  if (redirectToLoginIfNeeded()) return;\n\n  if (user && (currentPage === "login.html" || currentPage === "register.html")) {'
+          if old_init not in text:
+              raise SystemExit('Could not find initializePage insertion point in app.js')
+          text = text.replace(old_init, new_init, 1)
+
+          old_google = 'redirectTo: window.location.origin,'
+          new_google = 'redirectTo: new URL("login.html", window.location.href).href,'
+          text = text.replace(old_google, new_google)
+
+          app.write_text(text, encoding='utf-8')
+
+          protected = ['shop.html', 'cart.html', 'chat.html', 'seller.html', 'account.html']
+          supabase = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>'
+          app_script = '<script src="app.js"></script>'
+
+          for name in protected:
+              p = Path(name)
+              if not p.exists():
+                  continue
+              html = p.read_text(encoding='utf-8')
+              if 'src="app.js"' not in html:
+                  html = html.replace('</body>', f'{supabase}\n{app_script}\n</body>')
+              elif 'supabase-js@2' not in html:
+                  html = html.replace('<script src="app.js"></script>', f'{supabase}\n{app_script}')
+              p.write_text(html, encoding='utf-8')
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.js shop.html cart.html chat.html seller.html account.html
+          if git diff --cached --quiet; then
+            echo "No authentication changes needed."
+            exit 0
+          fi
+          git commit -m "Connect login to marketplace and protect authenticated pages"
+          git push
