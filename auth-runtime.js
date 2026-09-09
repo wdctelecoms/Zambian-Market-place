@@ -38,8 +38,29 @@
       return /register|sign.?up|create account/.test(text) && findInput(f,['email'],'email') && findInput(f,['password','password_confirmation','confirmPassword'],'password');
     });
   }
+  async function syncProfile(session, fallback={}) {
+    if (!session?.access_token) return null;
+    const email=session.user?.email || fallback.email || '';
+    const fullName=session.user?.user_metadata?.full_name || session.user?.user_metadata?.fullName || fallback.fullName || email.split('@')[0] || 'Customer';
+    const role=(session.user?.user_metadata?.role || fallback.role || 'CUSTOMER').toUpperCase()==='SELLER'?'SELLER':'CUSTOMER';
+    const body={
+      fullName,
+      role,
+      phone:fallback.phone || session.user?.user_metadata?.phone || '',
+      paymentMethod:fallback.paymentMethod || session.user?.user_metadata?.paymentMethod || 'CARD',
+      street:fallback.street || session.user?.user_metadata?.street || '',
+      city:fallback.city || session.user?.user_metadata?.city || '',
+      province:fallback.province || session.user?.user_metadata?.province || '',
+      country:fallback.country || session.user?.user_metadata?.country || 'Zambia',
+      postalCode:fallback.postalCode || session.user?.user_metadata?.postalCode || ''
+    };
+    const response=await fetch('/api/auth/sync',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify(body)});
+    if(!response.ok) throw new Error('Your account was authenticated, but the marketplace profile could not be synchronized.');
+    const payload=await response.json();
+    return payload.user || payload;
+  }
   async function redirectForUser(user) {
-    const role=(user?.user_metadata?.role||'CUSTOMER').toUpperCase();
+    const role=(user?.role||user?.user_metadata?.role||'CUSTOMER').toUpperCase();
     const params=new URLSearchParams(location.search);
     const returnUrl=params.get('returnUrl');
     const allowed=['shop.html','cart.html','seller.html','chat.html','account.html','checkout.html','orders.html'];
@@ -65,8 +86,14 @@
         const {data,error}=await c.auth.signInWithPassword({email,password});
         if (error) throw error;
         if (!data.session) throw new Error('Login did not create a session.');
+        let user=null;
+        try {
+          const response=await fetch('/api/auth/me',{headers:{Authorization:`Bearer ${data.session.access_token}`}});
+          if(response.ok){const payload=await response.json();user=payload.user||payload;}
+        } catch {}
+        if(!user) user=await syncProfile(data.session);
         message('Login successful. Opening the marketplace…','success');
-        await redirectForUser(data.user);
+        await redirectForUser(user || data.user);
       } catch(err) { message(err?.message||'Login failed. Please try again.','error'); setBusy(form,false); }
     },true);
   }
@@ -83,11 +110,20 @@
         if (confirm && confirm.value!==password) throw new Error('Passwords do not match.');
         if (password.length<6) throw new Error('Password must be at least 6 characters.');
         const name=findInput(form,['fullName','full_name','name','username'],'text')?.value.trim() || '';
-        const role=(findInput(form,['role'],'text')?.value||'CUSTOMER').toUpperCase();
-        const {data,error}=await c.auth.signUp({email,password,options:{data:{full_name:name,role:role==='SELLER'?'SELLER':'CUSTOMER'}}});
+        const roleInput=findInput(form,['role']);
+        const role=((roleInput?.value||'CUSTOMER').toUpperCase()==='SELLER')?'SELLER':'CUSTOMER';
+        const phone=findInput(form,['phone'],'tel')?.value.trim() || '';
+        const paymentMethod=findInput(form,['payment-method','paymentMethod'])?.value || 'CARD';
+        const {data,error}=await c.auth.signUp({email,password,options:{data:{full_name:name,fullName:name,role,phone,paymentMethod}}});
         if (error) throw error;
-        if (data.session) { message('Account created. Opening the marketplace…','success'); await redirectForUser(data.user); }
-        else { message('Account created. Check your email to verify your account, then log in.','success'); setBusy(form,false); }
+        if (data.session) {
+          const user=await syncProfile(data.session,{fullName:name,role,phone,paymentMethod});
+          message('Account created. Opening the marketplace…','success');
+          await redirectForUser(user || data.user);
+        } else {
+          message('Account created. Check your email to verify your account, then log in.','success');
+          setBusy(form,false);
+        }
       } catch(err) { message(err?.message||'Registration failed. Please try again.','error'); setBusy(form,false); }
     },true);
   }
