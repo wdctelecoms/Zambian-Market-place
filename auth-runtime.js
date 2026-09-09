@@ -40,24 +40,39 @@
   }
   async function syncProfile(session, fallback={}) {
     if (!session?.access_token) return null;
-    const email=session.user?.email || fallback.email || '';
-    const fullName=session.user?.user_metadata?.full_name || session.user?.user_metadata?.fullName || fallback.fullName || email.split('@')[0] || 'Customer';
-    const role=(session.user?.user_metadata?.role || fallback.role || 'CUSTOMER').toUpperCase()==='SELLER'?'SELLER':'CUSTOMER';
+    const authUser=session.user || {};
+    const metadata=authUser.user_metadata || {};
+    const email=authUser.email || fallback.email || '';
+    const fullName=metadata.full_name || metadata.fullName || metadata.name || fallback.fullName || email.split('@')[0] || 'Customer';
+    const role=(metadata.role || fallback.role || 'CUSTOMER').toUpperCase()==='SELLER'?'SELLER':'CUSTOMER';
     const body={
       fullName,
       role,
-      phone:fallback.phone || session.user?.user_metadata?.phone || '',
-      paymentMethod:fallback.paymentMethod || session.user?.user_metadata?.paymentMethod || 'CARD',
-      street:fallback.street || session.user?.user_metadata?.street || '',
-      city:fallback.city || session.user?.user_metadata?.city || '',
-      province:fallback.province || session.user?.user_metadata?.province || '',
-      country:fallback.country || session.user?.user_metadata?.country || 'Zambia',
-      postalCode:fallback.postalCode || session.user?.user_metadata?.postalCode || ''
+      phone:fallback.phone || metadata.phone || authUser.phone || '',
+      paymentMethod:fallback.paymentMethod || metadata.paymentMethod || 'CARD',
+      street:fallback.street || metadata.street || '',
+      city:fallback.city || metadata.city || '',
+      province:fallback.province || metadata.province || '',
+      country:fallback.country || metadata.country || 'Zambia',
+      postalCode:fallback.postalCode || metadata.postalCode || ''
     };
     const response=await fetch('/api/auth/sync',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify(body)});
     if(!response.ok) throw new Error('Your account was authenticated, but the marketplace profile could not be synchronized.');
     const payload=await response.json();
     return payload.user || payload;
+  }
+  async function getMarketplaceUser(session) {
+    if (!session?.access_token) return null;
+    try {
+      const response=await fetch('/api/auth/me',{headers:{Authorization:`Bearer ${session.access_token}`}});
+      if(response.ok){const payload=await response.json();return payload.user||payload;}
+    } catch {}
+    return null;
+  }
+  async function ensureMarketplaceUser(session, fallback={}) {
+    const existing=await getMarketplaceUser(session);
+    if (existing) return existing;
+    return await syncProfile(session,fallback);
   }
   async function redirectForUser(user) {
     const role=(user?.role||user?.user_metadata?.role||'CUSTOMER').toUpperCase();
@@ -72,7 +87,14 @@
     const p=page();
     const {data:{session}}=await c.auth.getSession();
     if (PROTECTED.has(p) && !session) { location.replace('login.html?returnUrl='+encodeURIComponent(p)); return; }
-    if (PUBLIC_AUTH.has(p) && session) { await redirectForUser(session.user); }
+    if (PUBLIC_AUTH.has(p) && session) {
+      try {
+        const user=await ensureMarketplaceUser(session);
+        await redirectForUser(user || session.user);
+      } catch (err) {
+        message(err?.message||'We could not load your marketplace profile. Please try again.','error');
+      }
+    }
   }
   async function bindLogin() {
     const c=client(), form=getAuthForm('login'); if (!c || !form || form.dataset.zmarketBound) return;
@@ -86,13 +108,8 @@
         const {data,error}=await c.auth.signInWithPassword({email,password});
         if (error) throw error;
         if (!data.session) throw new Error('Login did not create a session.');
-        let user=null;
-        try {
-          const response=await fetch('/api/auth/me',{headers:{Authorization:`Bearer ${data.session.access_token}`}});
-          if(response.ok){const payload=await response.json();user=payload.user||payload;}
-        } catch {}
-        if(!user) user=await syncProfile(data.session);
-        message('Login successful. Opening the marketplace…','success');
+        const user=await ensureMarketplaceUser(data.session,{email});
+        message('Login successful. Opening your marketplace account…','success');
         await redirectForUser(user || data.user);
       } catch(err) { message(err?.message||'Login failed. Please try again.','error'); setBusy(form,false); }
     },true);
@@ -117,8 +134,8 @@
         const {data,error}=await c.auth.signUp({email,password,options:{data:{full_name:name,fullName:name,role,phone,paymentMethod}}});
         if (error) throw error;
         if (data.session) {
-          const user=await syncProfile(data.session,{fullName:name,role,phone,paymentMethod});
-          message('Account created. Opening the marketplace…','success');
+          const user=await syncProfile(data.session,{email,fullName:name,role,phone,paymentMethod});
+          message('Account created. Opening your marketplace account…','success');
           await redirectForUser(user || data.user);
         } else {
           message('Account created. Check your email to verify your account, then log in.','success');
@@ -133,14 +150,34 @@
       const text=(el.textContent+' '+el.getAttribute('aria-label')).toLowerCase();
       if (!/google/.test(text) || el.dataset.zgoogle) return;
       el.dataset.zgoogle='1';
-      el.addEventListener('click',async e=>{ e.preventDefault(); message('Connecting to Google…','info'); const {error}=await c.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/login.html'}}); if(error) message(error.message,'error'); },true);
+      el.addEventListener('click',async e=>{
+        e.preventDefault(); message('Connecting to Google…','info');
+        const {error}=await c.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/login.html'}});
+        if(error) message(error.message,'error');
+      },true);
     });
+  }
+  async function handleAuthChange(event, session) {
+    if (event==='SIGNED_OUT') {
+      if (PROTECTED.has(page())) location.replace('login.html');
+      return;
+    }
+    if (!session) return;
+    if (PUBLIC_AUTH.has(page()) && event==='SIGNED_IN') {
+      try {
+        const user=await ensureMarketplaceUser(session);
+        await redirectForUser(user || session.user);
+      } catch (err) {
+        message(err?.message||'Signed in, but your marketplace profile could not be loaded.','error');
+      }
+    }
   }
   async function init() {
     if (!window.supabase) { message('Authentication service is still loading. Refresh the page if this message remains.','error'); return; }
+    const c=client();
     await guard();
     await bindLogin(); await bindRegister(); bindGoogle();
-    const c=client(); c.auth.onAuthStateChange((event,session)=>{ if(event==='SIGNED_OUT' && PROTECTED.has(page())) location.replace('login.html'); });
+    c.auth.onAuthStateChange((event,session)=>{ void handleAuthChange(event,session); });
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
