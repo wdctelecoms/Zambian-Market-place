@@ -735,12 +735,13 @@
 
 <!-- Supabase JS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
   // =================== SUPABASE CONFIG ===================
   // Replace with your actual Supabase project URL and anon key
-  const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
-  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const SUPABASE_URL = 'https://iqurvvxmfjfvlkvfsanq.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_0F_NAcjt5hB7cqq8t6y2qA_tFWGv8Oi';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // =================== AUTH & USER ID ===================
   // In a real app, you get the user from supabase.auth.getUser()
@@ -785,7 +786,7 @@
   let photoFile = null;
   let residenceFile = null;
   let photoPublicUrl = null;
-  let profilesTable = 'profiles'; // table name
+  let marketplaceUser = null;
 
   // =================== HELPERS ===================
   function showToast(message, type = 'success') {
@@ -823,135 +824,79 @@
   // =================== GET CURRENT USER ===================
   async function getCurrentUser() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        currentUserId = user.id;
-        return user;
-      }
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session?.access_token) throw error || new Error('No active session');
+
+      const response = await fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.message || 'Unable to load your account.');
+
+      marketplaceUser = payload.user;
+      currentUserId = marketplaceUser.id;
+      return marketplaceUser;
     } catch (e) {
-      console.warn('Auth not available, using mock user');
+      console.error('Could not load authenticated user:', e);
+      showToast('Could not load your account data.', 'error');
+      return null;
     }
-    
-    // Fallback for demo: you can remove this in production
-    currentUserId = 'user_12345';
-    return { id: currentUserId, email: 'chanda@example.com' };
   }
 
   // =================== LOAD USER PROFILE ===================
   async function loadUserProfile() {
-    if (!currentUserId) return;
+    if (!marketplaceUser) return;
 
     try {
-      const { data, error } = await supabase
-        .from(profilesTable)
-        .select('*')
-        .eq('id', currentUserId)
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        // Fill form fields
-        elements.firstName.value = data.first_name || '';
-        elements.lastName.value = data.last_name || '';
-        elements.email.value = data.email || '';
-        elements.phone.value = data.phone || '';
-        elements.bio.value = data.bio || '';
-        elements.username.value = data.username || '';
-        elements.memberSince.value = data.member_since || '—';
-        
-        // Photo
-        photoPublicUrl = data.profile_photo_url || null;
-        
-        // Update sidebar
-        elements.sidebarUserName.textContent = `${data.first_name || 'User'} ${data.last_name || ''}`.trim();
-        
-        // Account status
-        const status = data.status || 'active';
-        elements.accountStatus.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-        elements.accountStatusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-        
-        updateProfilePreview();
-
-        // Load residence verification status
-        const { data: docData } = await supabase
-          .from('verification_documents')
-          .select('*')
-          .eq('user_id', currentUserId)
-          .eq('document_type', 'proof_of_residence')
-          .single();
-
-        if (docData) {
-          updateResidenceStatus(docData.status === 'verified' ? 'Verified' : 'Pending');
-          if (docData.file_url) {
-            elements.residencePreview.style.display = 'block';
-            elements.residenceFileName.textContent = docData.file_name || 'Document';
-            elements.residenceFileMeta.textContent = 'Already uploaded';
-            elements.submitVerificationBtn.disabled = true;
-          }
-        } else {
-          updateResidenceStatus('Not submitted');
-        }
-      } else {
-        // No profile exists, create one
-        await createUserProfile();
-      }
+      const data = marketplaceUser;
+      const nameParts = (data.fullName || '').trim().split(/\s+/).filter(Boolean);
+      const details = data.customer || data.seller || {};
+      elements.firstName.value = nameParts.shift() || '';
+      elements.lastName.value = nameParts.join(' ');
+      elements.email.value = data.email || '';
+      elements.phone.value = details.phone || '';
+      elements.bio.value = data.seller?.bio || '';
+      elements.username.value = data.seller?.storeName || data.fullName || data.email || '';
+      elements.memberSince.value = data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '—';
+      elements.sidebarUserName.textContent = data.fullName || data.email || 'User';
+      elements.accountStatus.textContent = 'Active';
+      elements.accountStatusBadge.textContent = data.role === 'SELLER' ? 'Seller' : 'Active';
+      updateResidenceStatus('Not submitted');
+      updateProfilePreview();
     } catch (err) {
       console.error('Error loading profile:', err);
       showToast('Could not load profile data.', 'error');
     }
   }
 
-  // =================== CREATE PROFILE IF NOT EXISTS ===================
-  async function createUserProfile() {
-    try {
-      const { data: user } = await supabase.auth.getUser();
-      const email = user?.email || 'user@example.com';
-      
-      const { error } = await supabase
-        .from(profilesTable)
-        .insert({
-          id: currentUserId,
-          email: email,
-          first_name: '',
-          last_name: '',
-          phone: '',
-          bio: '',
-          status: 'active',
-          created_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-      
-      // Reload after creation
-      await loadUserProfile();
-    } catch (err) {
-      console.error('Could not create profile:', err);
-    }
-  }
-
   // =================== SAVE PERSONAL INFO ===================
   elements.saveInfoBtn.addEventListener('click', async () => {
-    if (!currentUserId) return;
+    if (!marketplaceUser) return;
 
-    const profileData = {
-      first_name: elements.firstName.value.trim(),
-      last_name: elements.lastName.value.trim(),
-      email: elements.email.value.trim(),
-      phone: elements.phone.value.trim(),
-      bio: elements.bio.value.trim()
-    };
+    if (marketplaceUser.role !== 'CUSTOMER') {
+      showToast('Seller profile editing is not available here yet.', 'error');
+      return;
+    }
+
+    const fullName = `${elements.firstName.value.trim()} ${elements.lastName.value.trim()}`.trim();
 
     try {
-      const { error } = await supabase
-        .from(profilesTable)
-        .update(profileData)
-        .eq('id', currentUserId);
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch('/api/customer/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ fullName, phone: elements.phone.value.trim() })
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.message || 'Failed to save changes.');
 
-      if (error) throw error;
+      marketplaceUser = { ...marketplaceUser, ...payload };
 
       // Update sidebar
-      elements.sidebarUserName.textContent = `${profileData.first_name} ${profileData.last_name}`.trim();
+      elements.sidebarUserName.textContent = fullName;
       updateProfilePreview();
       showToast('Profile information saved!');
     } catch (err) {
@@ -1007,14 +952,6 @@
       
       photoPublicUrl = urlData.publicUrl;
       
-      // Update profile record
-      const { error: updateError } = await supabase
-        .from(profilesTable)
-        .update({ profile_photo_url: photoPublicUrl })
-        .eq('id', currentUserId);
-      
-      if (updateError) throw updateError;
-      
       showToast('Profile photo updated successfully!');
     } catch (err) {
       console.error('Upload error:', err);
@@ -1029,17 +966,7 @@
     elements.photoImg.style.display = 'none';
     elements.photoInitials.style.display = 'block';
     
-    // Update profile in DB
-    try {
-      await supabase
-        .from(profilesTable)
-        .update({ profile_photo_url: null })
-        .eq('id', currentUserId);
-      
-      showToast('Photo removed');
-    } catch (err) {
-      showToast('Failed to remove photo', 'error');
-    }
+    showToast('Photo removed');
   });
 
   // =================== RESIDENCE UPLOAD ===================
@@ -1123,7 +1050,6 @@
   });
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="app.js"></script>
 <script src="search-fix.js"></script>
 </body>

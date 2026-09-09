@@ -124,7 +124,38 @@ export const sync = async (req: Request, res: Response) => {
 export const me = async (req: AuthenticatedRequest, res: Response) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user!.id },
-    select: { id: true, fullName: true, email: true, role: true },
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      role: true,
+      createdAt: true,
+      customer: {
+        select: {
+          phone: true,
+          preferredPaymentMethod: true,
+          addresses: {
+            where: { isDefault: true },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: {
+              street: true,
+              city: true,
+              province: true,
+              country: true,
+              postalCode: true,
+            },
+          },
+        },
+      },
+      seller: {
+        select: {
+          storeName: true,
+          phone: true,
+          bio: true,
+        },
+      },
+    },
   });
 
   if (!user) {
