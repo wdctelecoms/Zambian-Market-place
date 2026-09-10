@@ -74,6 +74,55 @@
     if (existing) return existing;
     return await syncProfile(session,fallback);
   }
+
+  // Email verification can land on shop.html with the access-token hash while
+  // Supabase is still exchanging that hash for a browser session. The old
+  // dashboard code queried getSession() only once, so a timing race could make
+  // the page think the visitor was logged out. Wait briefly for the session to
+  // become available before allowing protected pages to load.
+  async function waitForSession(c, attempts=24, delayMs=150) {
+    if (!c) return null;
+    for (let i=0; i<attempts; i++) {
+      try {
+        const { data } = await c.auth.getSession();
+        if (data?.session?.access_token) return data.session;
+      } catch {}
+      if (i < attempts - 1) await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+    return null;
+  }
+
+  // Bridge the older app.js auth loader to the same Supabase session. This is
+  // deliberately installed before the shop page's inline dashboard script,
+  // which prevents the verification-to-shop race from showing a false login
+  // state. The original loader remains responsible for the marketplace API
+  // profile and local auth-state storage.
+  const originalHydrate = window.hydrateAuthSessionFromSupabase;
+  window.hydrateAuthSessionFromSupabase = async function () {
+    const c = client();
+    if (!c) return null;
+    const session = await waitForSession(c);
+    if (!session) return null;
+
+    if (typeof originalHydrate === 'function') {
+      try {
+        return await originalHydrate();
+      } catch (err) {
+        const user = await ensureMarketplaceUser(session);
+        if (user) return user;
+        throw err;
+      }
+    }
+
+    const user = await ensureMarketplaceUser(session);
+    if (user) {
+      try {
+        localStorage.setItem('zmarket-auth', JSON.stringify({user, tokens:{accessToken:session.access_token}}));
+      } catch {}
+    }
+    return user;
+  };
+
   async function redirectForUser(user) {
     const role=(user?.role||user?.user_metadata?.role||'CUSTOMER').toUpperCase();
     const params=new URLSearchParams(location.search);
@@ -85,7 +134,7 @@
   async function guard() {
     const c=client(); if (!c) return;
     const p=page();
-    const {data:{session}}=await c.auth.getSession();
+    const session=await waitForSession(c);
     if (PROTECTED.has(p) && !session) { location.replace('login.html?returnUrl='+encodeURIComponent(p)); return; }
     if (PUBLIC_AUTH.has(p) && session) {
       try {
