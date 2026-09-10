@@ -9,7 +9,16 @@
   function page() { return location.pathname.split('/').pop() || 'index.html'; }
   function client() {
     if (!window.supabase) return null;
-    if (!window.__zmarketSupabase) window.__zmarketSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    if (!window.__zmarketSupabase) {
+      window.__zmarketSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: true,
+          flowType: 'implicit'
+        }
+      });
+    }
     return window.__zmarketSupabase;
   }
   function message(text, type) {
@@ -75,13 +84,38 @@
     return await syncProfile(session,fallback);
   }
 
-  // Email verification can land on shop.html with the access-token hash while
-  // Supabase is still exchanging that hash for a browser session. The old
-  // dashboard code queried getSession() only once, so a timing race could make
-  // the page think the visitor was logged out. Wait briefly for the session to
-  // become available before allowing protected pages to load.
-  async function waitForSession(c, attempts=24, delayMs=150) {
+  // Email verification may return either an implicit-flow hash or a PKCE code.
+  // Resolve either form before the dashboard asks for the current session.
+  async function resolveVerificationUrl(c) {
     if (!c) return null;
+    try {
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get('code');
+      if (code) {
+        const { data, error } = await c.auth.exchangeCodeForSession(code);
+        if (!error && data?.session) return data.session;
+      }
+    } catch {}
+
+    try {
+      const hash = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+      const accessToken = hash.get('access_token');
+      const refreshToken = hash.get('refresh_token');
+      if (accessToken && refreshToken) {
+        const { data, error } = await c.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        if (!error && data?.session) {
+          try { history.replaceState({}, document.title, window.location.pathname + window.location.search); } catch {}
+          return data.session;
+        }
+      }
+    } catch {}
+    return null;
+  }
+
+  async function waitForSession(c, attempts=40, delayMs=150) {
+    if (!c) return null;
+    const direct = await resolveVerificationUrl(c);
+    if (direct?.access_token) return direct;
     for (let i=0; i<attempts; i++) {
       try {
         const { data } = await c.auth.getSession();
@@ -92,11 +126,7 @@
     return null;
   }
 
-  // Bridge the older app.js auth loader to the same Supabase session. This is
-  // deliberately installed before the shop page's inline dashboard script,
-  // which prevents the verification-to-shop race from showing a false login
-  // state. The original loader remains responsible for the marketplace API
-  // profile and local auth-state storage.
+  // Bridge the older app.js auth loader to the same verified Supabase session.
   const originalHydrate = window.hydrateAuthSessionFromSupabase;
   window.hydrateAuthSessionFromSupabase = async function () {
     const c = client();
@@ -106,12 +136,9 @@
 
     if (typeof originalHydrate === 'function') {
       try {
-        return await originalHydrate();
-      } catch (err) {
-        const user = await ensureMarketplaceUser(session);
+        const user = await originalHydrate();
         if (user) return user;
-        throw err;
-      }
+      } catch {}
     }
 
     const user = await ensureMarketplaceUser(session);
