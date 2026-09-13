@@ -3,8 +3,10 @@
 (function () {
   const SUPABASE_URL = 'https://iqurvvxmfjfvlkvfsanq.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_0F_NAcjt5hB7cqq8t6y2qA_tFWGv8Oi';
-  const PROTECTED = new Set(['shop.html','cart.html','seller.html','chat.html','account.html','checkout.html','orders.html']);
+  const PROTECTED = new Set(['shop.html','cart.html','seller.html','chat.html','account.html','checkout.html','orders.html','dashboard.html','profile.html','messages.html','favorites.html','notifications.html']);
   const PUBLIC_AUTH = new Set(['login.html','register.html']);
+  const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
+  const SESSION_CHECK_MS = 15 * 1000;
 
   function page() { return location.pathname.split('/').pop() || 'index.html'; }
   function client() {
@@ -55,19 +57,8 @@
     return null;
   }
 
-  // Make the old app.js auth helpers use the real Supabase session even though
-  // app.js is an older client-side auth layer. These overrides are installed
-  // immediately, before app.js DOMContentLoaded handlers run.
-  window.isAuthenticated=function(){
-    if(window.__zmarketSession?.access_token)return true;
-    try{const raw=localStorage.getItem('zmarket-auth');if(raw){const parsed=JSON.parse(raw);if(parsed?.tokens?.accessToken)return true}}catch{}
-    const hash=window.location.hash||'';if(hash.includes('access_token=')&&hash.includes('refresh_token='))return true;
-    return Boolean(new URLSearchParams(window.location.search).get('code'));
-  };
-  window.getAccessToken=function(){
-    if(window.__zmarketSession?.access_token)return window.__zmarketSession.access_token;
-    try{const raw=localStorage.getItem('zmarket-auth');const parsed=raw?JSON.parse(raw):null;return parsed?.tokens?.accessToken||''}catch{return ''}
-  };
+  window.isAuthenticated=function(){return Boolean(window.__zmarketSession?.access_token)};
+  window.getAccessToken=function(){return window.__zmarketSession?.access_token||''};
 
   const originalHydrate=window.hydrateAuthSessionFromSupabase;
   window.hydrateAuthSessionFromSupabase=async function(){
@@ -92,11 +83,73 @@
   }
 
   async function redirectForUser(user){const role=(user?.role||user?.user_metadata?.role||'CUSTOMER').toUpperCase();const params=new URLSearchParams(location.search);const returnUrl=params.get('returnUrl');const allowed=['shop.html','cart.html','seller.html','chat.html','account.html','checkout.html','orders.html'];if(returnUrl&&allowed.includes(returnUrl.split('/').pop())){location.replace(returnUrl);return}location.replace(role==='SELLER'?'seller.html':'shop.html')}
-  async function guard(){const c=client();if(!c)return;const p=page();const session=await waitForSession(c);if(session)window.__zmarketSession=session;if(PROTECTED.has(p)&&!session){if(window.location.hash.includes('access_token=')||new URLSearchParams(window.location.search).get('code'))return;location.replace('login.html?returnUrl='+encodeURIComponent(p));return}if(PUBLIC_AUTH.has(p)&&session){try{const user=await ensureMarketplaceUser(session);await redirectForUser(user||session.user)}catch(err){message(err?.message||'We could not load your marketplace profile. Please try again.','error')}}}
+
+  function clearAuthState(){
+    window.__zmarketSession=null;window.__zmarketUser=null;
+    try{localStorage.removeItem('zmarket-auth')}catch{}
+  }
+
+  async function enforceSession(){
+    const c=client();if(!c)return false;
+    const p=page();
+    if(!PROTECTED.has(p))return true;
+    const session=await waitForSession(c);
+    if(!session){
+      clearAuthState();
+      message('Your session has expired or you are not logged in. Redirecting to login…','error');
+      setTimeout(()=>location.replace('login.html?returnUrl='+encodeURIComponent(p)),700);
+      return false;
+    }
+    window.__zmarketSession=session;
+    return true;
+  }
+
+  async function guard(){
+    const c=client();if(!c)return;
+    const p=page();
+    const session=await waitForSession(c);
+    if(session)window.__zmarketSession=session;
+    if(PROTECTED.has(p)&&!session){
+      clearAuthState();
+      if(window.location.hash.includes('access_token=')||new URLSearchParams(window.location.search).get('code'))return;
+      message('Please log in to access this page. Redirecting…','error');
+      setTimeout(()=>location.replace('login.html?returnUrl='+encodeURIComponent(p)),700);
+      return;
+    }
+    if(PUBLIC_AUTH.has(p)&&session){try{const user=await ensureMarketplaceUser(session);await redirectForUser(user||session.user)}catch(err){message(err?.message||'We could not load your marketplace profile. Please try again.','error')}}
+  }
+
+  function startTimeoutProtection(){
+    if(!PROTECTED.has(page()))return;
+    let lastValid=Date.now();
+    const check=async()=>{
+      const c=client();if(!c)return;
+      try{
+        const {data}=await c.auth.getSession();
+        if(!data?.session){
+          clearAuthState();
+          message('Your login session has ended. Redirecting to login…','error');
+          setTimeout(()=>location.replace('login.html?returnUrl='+encodeURIComponent(page())),500);
+          return;
+        }
+        window.__zmarketSession=data.session;
+        lastValid=Date.now();
+      }catch{
+        if(Date.now()-lastValid>SESSION_TIMEOUT_MS){
+          clearAuthState();
+          location.replace('login.html?returnUrl='+encodeURIComponent(page()));
+        }
+      }
+    };
+    setInterval(check,SESSION_CHECK_MS);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)void check()});
+    window.addEventListener('pageshow',()=>void check());
+  }
+
   async function bindLogin(){const c=client(),form=getAuthForm('login');if(!c||!form||form.dataset.zmarketBound)return;form.dataset.zmarketBound='1';form.addEventListener('submit',async e=>{e.preventDefault();e.stopImmediatePropagation();setBusy(form,true);message('Signing you in…','info');try{const email=findInput(form,['email'],'email')?.value.trim();const password=findInput(form,['password'],'password')?.value;if(!email||!password)throw new Error('Enter your email and password.');const {data,error}=await c.auth.signInWithPassword({email,password});if(error)throw error;if(!data.session)throw new Error('Login did not create a session.');window.__zmarketSession=data.session;const user=await ensureMarketplaceUser(data.session,{email});message('Login successful. Opening your marketplace account…','success');await redirectForUser(user||data.user)}catch(err){message(err?.message||'Login failed. Please try again.','error');setBusy(form,false)}},true)}
   async function bindRegister(){const c=client(),form=getAuthForm('register');if(!c||!form||form.dataset.zmarketBound)return;form.dataset.zmarketBound='1';form.addEventListener('submit',async e=>{e.preventDefault();e.stopImmediatePropagation();setBusy(form,true);message('Creating your account…','info');try{const email=findInput(form,['email'],'email')?.value.trim();const password=findInput(form,['password'],'password')?.value;const confirm=findInput(form,['password_confirmation','confirmPassword','confirm-password','confirm_password'],'password');if(!email||!password)throw new Error('Enter an email address and password.');if(confirm&&confirm.value!==password)throw new Error('Passwords do not match.');if(password.length<6)throw new Error('Password must be at least 6 characters.');const name=findInput(form,['fullName','full_name','name','username'],'text')?.value.trim()||'';const roleInput=findInput(form,['role']);const role=((roleInput?.value||'CUSTOMER').toUpperCase()==='SELLER')?'SELLER':'CUSTOMER';const phone=findInput(form,['phone'],'tel')?.value.trim()||'';const paymentMethod=findInput(form,['payment-method','paymentMethod'])?.value||'CARD';const {data,error}=await c.auth.signUp({email,password,options:{data:{full_name:name,fullName:name,role,phone,paymentMethod}}});if(error)throw error;if(data.session){window.__zmarketSession=data.session;const user=await syncProfile(data.session,{email,fullName:name,role,phone,paymentMethod});message('Account created. Opening your marketplace account…','success');await redirectForUser(user||data.user)}else{message('Account created. Check your email to verify your account, then log in.','success');setBusy(form,false)}}catch(err){message(err?.message||'Registration failed. Please try again.','error');setBusy(form,false)}},true)}
   function bindGoogle(){const c=client();if(!c)return;document.querySelectorAll('button,a').forEach(el=>{const text=(el.textContent+' '+el.getAttribute('aria-label')).toLowerCase();if(!/google/.test(text)||el.dataset.zgoogle)return;el.dataset.zgoogle='1';el.addEventListener('click',async e=>{e.preventDefault();message('Connecting to Google…','info');const {error}=await c.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/login.html'}});if(error)message(error.message,'error')},true)})}
-  async function handleAuthChange(event,session){if(event==='SIGNED_OUT'){window.__zmarketSession=null;try{localStorage.removeItem('zmarket-auth')}catch{}if(PROTECTED.has(page()))location.replace('login.html');return}if(!session)return;window.__zmarketSession=session;if(PUBLIC_AUTH.has(page())&&event==='SIGNED_IN'){try{const user=await ensureMarketplaceUser(session);await redirectForUser(user||session.user)}catch(err){message(err?.message||'Signed in, but your marketplace profile could not be loaded.','error')}}}
-  async function init(){if(!window.supabase){message('Authentication service is still loading. Refresh the page if this message remains.','error');return}const c=client();void establishAndSync();await guard();await bindLogin();await bindRegister();bindGoogle();c.auth.onAuthStateChange((event,session)=>{void handleAuthChange(event,session)})}
+  async function handleAuthChange(event,session){if(event==='SIGNED_OUT'){clearAuthState();if(PROTECTED.has(page()))location.replace('login.html');return}if(!session)return;window.__zmarketSession=session;if(PROTECTED.has(page()))void enforceSession();if(PUBLIC_AUTH.has(page())&&event==='SIGNED_IN'){try{const user=await ensureMarketplaceUser(session);await redirectForUser(user||session.user)}catch(err){message(err?.message||'Signed in, but your marketplace profile could not be loaded.','error')}}}
+  async function init(){if(!window.supabase){message('Authentication service is still loading. Refresh the page if this message remains.','error');return}const c=client();void establishAndSync();await guard();await bindLogin();await bindRegister();bindGoogle();startTimeoutProtection();c.auth.onAuthStateChange((event,session)=>{void handleAuthChange(event,session)})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
