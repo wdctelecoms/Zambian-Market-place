@@ -23,13 +23,39 @@ jobs:
           app = Path('app.js')
           text = app.read_text(encoding='utf-8')
 
-          old_set = 'const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "dashboard.html"]);'
-          new_set = 'const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html"]);'
-          text = text.replace(old_set, new_set)
+          # Keep redirects on the current deployment instead of an old hard-coded workers.dev address.
+          text = text.replace(
+              'const MAIN_APP_SHOP_URL = "https://zambian-market-place.wdcentreprenuer.workers.dev/shop.html";',
+              'const MAIN_APP_SHOP_URL = new URL("shop.html", window.location.href).href;'
+          )
 
-          old_protected = 'const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "dashboard.html"]);'
-          new_protected = 'const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html"]);'
-          text = text.replace(old_protected, new_protected)
+          # Keep checkout and orders inside the same Supabase-authenticated flow.
+          text = text.replace(
+              'const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html"]);',
+              'const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html", "checkout.html", "orders.html"]);'
+          )
+          text = text.replace(
+              'const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "dashboard.html"]);',
+              'const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html", "checkout.html", "orders.html"]);'
+          )
+          text = text.replace(
+              'const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html"]);',
+              'const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html", "checkout.html", "orders.html"]);'
+          )
+          text = text.replace(
+              'const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "dashboard.html"]);',
+              'const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html", "checkout.html", "orders.html"]);'
+          )
+
+          # Email confirmation should return to the current deployment.
+          text = text.replace(
+              'emailRedirectTo: MAIN_APP_SHOP_URL,',
+              'emailRedirectTo: new URL("shop.html", window.location.href).href,'
+          )
+          text = text.replace(
+              'emailRedirectTo: "https://zambian-market-place.wdcentreprenuer.workers.dev/shop.html",',
+              'emailRedirectTo: new URL("shop.html", window.location.href).href,'
+          )
 
           marker = '  const user = await hydrateAuthSessionFromSupabase().catch(() => null);\n\n'
           guard = '  // Authenticate before rendering protected marketplace pages.\n  if (redirectToLoginIfNeeded()) return;\n\n'
@@ -42,43 +68,56 @@ jobs:
           )
           app.write_text(text, encoding='utf-8')
 
-          # All authenticated pages must load the shared auth/session code.
-          protected = ['shop.html', 'cart.html', 'chat.html', 'seller.html', 'account.html']
+          # Every protected page must load Supabase + the shared auth runtime.
+          protected = [
+              'shop.html', 'cart.html', 'seller.html', 'chat.html',
+              'account.html', 'checkout.html', 'orders.html'
+          ]
           supabase_tag = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>'
           app_tag = '<script src="app.js"></script>'
+          runtime_tag = '<script src="auth-runtime.js"></script>'
 
           for name in protected:
               p = Path(name)
               if not p.exists():
                   continue
               html = p.read_text(encoding='utf-8')
-              if 'src="app.js"' not in html:
-                  html = html.replace('</body>', f'{supabase_tag}\n{app_tag}\n</body>')
+              if 'auth-runtime.js' not in html:
+                  injection = supabase_tag + '\n' + app_tag + '\n' + runtime_tag + '\n'
+                  if '</body>' in html:
+                      html = html.replace('</body>', injection + '</body>', 1)
+                  elif '</head>' in html:
+                      html = html.replace('</head>', injection + '</head>', 1)
+                  else:
+                      html += '\n' + injection
               elif 'supabase-js@2' not in html:
-                  html = html.replace(app_tag, f'{supabase_tag}\n{app_tag}')
+                  html = html.replace(app_tag, supabase_tag + '\n' + app_tag, 1)
               p.write_text(html, encoding='utf-8')
 
-          # shop.html has its own legacy dashboard script. Its old client
-          # declaration shadows the global Supabase library and throws a
-          # ReferenceError. Keep the existing UI but initialize the client
-          # from window.supabase so the page can coexist with app.js.
-          shop = Path('shop.html')
-          if shop.exists():
-              html = shop.read_text(encoding='utf-8')
-              html = html.replace(
-                  "const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);",
-                  "const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);"
-              )
-              shop.write_text(html, encoding='utf-8')
+          # Login and registration also need the same Supabase client/runtime.
+          for name in ['login.html', 'register.html']:
+              p = Path(name)
+              if not p.exists():
+                  continue
+              html = p.read_text(encoding='utf-8')
+              if 'auth-runtime.js' not in html:
+                  injection = supabase_tag + '\n' + runtime_tag + '\n'
+                  if '</body>' in html:
+                      html = html.replace('</body>', injection + '</body>', 1)
+                  elif '</head>' in html:
+                      html = html.replace('</head>', injection + '</head>', 1)
+                  else:
+                      html += '\n' + injection
+                  p.write_text(html, encoding='utf-8')
 
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app.js shop.html cart.html chat.html seller.html account.html
+          git add app.js login.html register.html shop.html cart.html seller.html chat.html account.html checkout.html orders.html
           if git diff --cached --quiet; then
             echo "No authentication changes needed."
             exit 0
           fi
-          git commit -m "Fix marketplace authentication and shop Supabase client"
+          git commit -m "Fix Supabase auth redirects and protected page wiring"
           git push
