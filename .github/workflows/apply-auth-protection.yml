@@ -15,100 +15,47 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Patch authentication and protected pages
+      - name: Protect every marketplace page and wire live auth data
         shell: python
         run: |
           from pathlib import Path
 
-          app = Path('app.js')
-          text = app.read_text(encoding='utf-8')
-
-          # Keep redirects on the current deployment instead of an old hard-coded workers.dev address.
-          text = text.replace(
-              'const MAIN_APP_SHOP_URL = "https://zambian-market-place.wdcentreprenuer.workers.dev/shop.html";',
-              'const MAIN_APP_SHOP_URL = new URL("shop.html", window.location.href).href;'
-          )
-
-          # Keep checkout and orders inside the same Supabase-authenticated flow.
-          text = text.replace(
-              'const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html"]);',
-              'const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html", "checkout.html", "orders.html"]);'
-          )
-          text = text.replace(
-              'const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "dashboard.html"]);',
-              'const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html", "checkout.html", "orders.html"]);'
-          )
-          text = text.replace(
-              'const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html"]);',
-              'const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html", "checkout.html", "orders.html"]);'
-          )
-          text = text.replace(
-              'const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "dashboard.html"]);',
-              'const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html", "checkout.html", "orders.html"]);'
-          )
-
-          # Email confirmation should return to the current deployment.
-          text = text.replace(
-              'emailRedirectTo: MAIN_APP_SHOP_URL,',
-              'emailRedirectTo: new URL("shop.html", window.location.href).href,'
-          )
-          text = text.replace(
-              'emailRedirectTo: "https://zambian-market-place.wdcentreprenuer.workers.dev/shop.html",',
-              'emailRedirectTo: new URL("shop.html", window.location.href).href,'
-          )
-
-          marker = '  const user = await hydrateAuthSessionFromSupabase().catch(() => null);\n\n'
-          guard = '  // Authenticate before rendering protected marketplace pages.\n  if (redirectToLoginIfNeeded()) return;\n\n'
-          if marker in text and guard not in text:
-              text = text.replace(marker, marker + guard, 1)
-
-          text = text.replace(
-              'redirectTo: window.location.origin,',
-              'redirectTo: new URL("login.html", window.location.href).href,'
-          )
-          app.write_text(text, encoding='utf-8')
-
-          # Every protected page must load Supabase + the shared auth runtime.
-          protected = [
-              'shop.html', 'cart.html', 'seller.html', 'chat.html',
-              'account.html', 'checkout.html', 'orders.html'
-          ]
+          public_pages = {'index.html', 'intro.html', 'login.html', 'register.html'}
           supabase_tag = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>'
+          guard_tag = '<script src="auth-guard.js"></script>'
           app_tag = '<script src="app.js"></script>'
-          runtime_tag = '<script src="auth-runtime.js"></script>'
 
-          for name in protected:
-              p = Path(name)
-              if not p.exists():
+          changed = []
+          for p in sorted(Path('.').glob('*.html')):
+              if p.name in public_pages:
                   continue
+
               html = p.read_text(encoding='utf-8')
-              if 'auth-runtime.js' not in html:
-                  injection = supabase_tag + '\n' + app_tag + '\n' + runtime_tag + '\n'
-                  if '</body>' in html:
-                      html = html.replace('</body>', injection + '</body>', 1)
+
+              # The guard must run before application code so API requests carry
+              # the current Supabase access token and unauthenticated users never
+              # get a usable protected page.
+              if 'auth-guard.js' not in html:
+                  injection = supabase_tag + '\n' + guard_tag + '\n'
+                  if 'app.js' in html:
+                      html = html.replace(app_tag, injection + app_tag, 1)
                   elif '</head>' in html:
                       html = html.replace('</head>', injection + '</head>', 1)
-                  else:
-                      html += '\n' + injection
-              elif 'supabase-js@2' not in html:
-                  html = html.replace(app_tag, supabase_tag + '\n' + app_tag, 1)
-              p.write_text(html, encoding='utf-8')
-
-          # Login and registration also need the same Supabase client/runtime.
-          for name in ['login.html', 'register.html']:
-              p = Path(name)
-              if not p.exists():
-                  continue
-              html = p.read_text(encoding='utf-8')
-              if 'auth-runtime.js' not in html:
-                  injection = supabase_tag + '\n' + runtime_tag + '\n'
-                  if '</body>' in html:
+                  elif '</body>' in html:
                       html = html.replace('</body>', injection + '</body>', 1)
-                  elif '</head>' in html:
-                      html = html.replace('</head>', injection + '</head>', 1)
                   else:
                       html += '\n' + injection
+
+              # Make sure pages using the shared application logic actually load it.
+              # Do not add a duplicate app.js if one is already present.
+              if 'app.js' not in html and '</body>' in html:
+                  html = html.replace('</body>', app_tag + '\n</body>', 1)
+
+              if html != p.read_text(encoding='utf-8'):
                   p.write_text(html, encoding='utf-8')
+                  changed.append(p.name)
+
+          print('Protected/wired:', ', '.join(changed) if changed else 'none')
 
       - name: Commit changes
         shell: bash
@@ -116,18 +63,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Only stage files that actually exist. Some optional marketplace pages
-          # (such as orders.html) may not exist in this repository yet.
-          git add -- app.js
-          for file in login.html register.html shop.html cart.html seller.html chat.html account.html checkout.html orders.html dashboard.html profile.html messages.html favorites.html notifications.html; do
-            if [ -f "$file" ]; then
-              git add -- "$file"
-            fi
+          git add -- auth-guard.js app.js .github/workflows/apply-auth-protection.yml
+          for file in *.html; do
+            [ -f "$file" ] || continue
+            git add -- "$file"
           done
 
           if git diff --cached --quiet; then
-            echo "No authentication changes needed."
+            echo "All pages are already protected and wired."
             exit 0
           fi
-          git commit -m "Fix Supabase auth redirects and protected page wiring"
+          git commit -m "Protect all marketplace pages and load authenticated data"
           git push
