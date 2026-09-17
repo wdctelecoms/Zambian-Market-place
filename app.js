@@ -6,7 +6,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_0F_NAcjt5hB7cqq8t6y2qA_tFWGv8Oi";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const AUTH_STORAGE_KEY = "zmarket-auth";
-const MAIN_APP_SHOP_URL = "https://zambian-market-place.wdcentreprenuer.workers.dev/shop.html";
+const MAIN_APP_SHOP_URL = new URL("shop.html", window.location.href).href;
 
 function loadInnerPageStyles() {
   const innerPages = new Set(["shop.html", "account.html", "cart.html", "chat.html", "checkout.html", "seller.html"]);
@@ -108,7 +108,7 @@ function getReturnUrl() {
 
   try {
     const parsed = new URL(raw, window.location.origin);
-    const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html"]);
+    const allowedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html", "checkout.html", "orders.html"]);
     if (allowedPages.has(parsed.pathname.split("/").pop() || "")) {
       return parsed.pathname.replace(/^\//, "");
     }
@@ -120,7 +120,7 @@ function getReturnUrl() {
 }
 
 function redirectToLoginIfNeeded() {
-  const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html"]);
+  const protectedPages = new Set(["shop.html", "cart.html", "seller.html", "chat.html", "account.html", "checkout.html", "orders.html"]);
   const currentPage = window.location.pathname.split("/").pop() || "index.html";
 
   if (!protectedPages.has(currentPage) || isAuthenticated()) {
@@ -368,7 +368,7 @@ function bindRegisterForm() {
         email,
         password,
         options: {
-          emailRedirectTo: MAIN_APP_SHOP_URL,
+          emailRedirectTo: new URL("shop.html", window.location.href).href,
           data: {
             fullName,
             role,
