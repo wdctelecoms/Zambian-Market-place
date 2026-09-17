@@ -8,6 +8,19 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 const AUTH_STORAGE_KEY = "zmarket-auth";
 const MAIN_APP_SHOP_URL = "https://zambian-market-place.wdcentreprenuer.workers.dev/shop.html";
 
+function loadInnerPageStyles() {
+  const innerPages = new Set(["shop.html", "account.html", "cart.html", "chat.html", "checkout.html", "seller.html"]);
+  const currentPage = window.location.pathname.split("/").pop() || "index.html";
+  if (!innerPages.has(currentPage) || document.querySelector('link[href="inner-pages.css"]')) return;
+
+  const stylesheet = document.createElement("link");
+  stylesheet.rel = "stylesheet";
+  stylesheet.href = "inner-pages.css";
+  document.head.appendChild(stylesheet);
+}
+
+loadInnerPageStyles();
+
 const authState = loadAuthState();
 
 function loadAuthState() {

@@ -528,6 +528,7 @@
       .main { padding: 20px; }
     }
   </style>
+  <link rel="stylesheet" href="inner-pages.css" />
 </head>
 <body>
 
@@ -843,6 +844,21 @@
     }
   }
 
+  async function refreshSharedUserState(session) {
+    const response = await fetch('/api/auth/me', {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.message || 'Unable to refresh your account.');
+
+    marketplaceUser = payload.user;
+    localStorage.setItem('zmarket-auth', JSON.stringify({
+      user: marketplaceUser,
+      tokens: { accessToken: session.access_token },
+    }));
+    return marketplaceUser;
+  }
+
   // =================== LOAD USER PROFILE ===================
   async function loadUserProfile() {
     if (!marketplaceUser) return;
@@ -893,11 +909,9 @@
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message || 'Failed to save changes.');
 
-      marketplaceUser = { ...marketplaceUser, ...payload };
+      await refreshSharedUserState(session);
+      await loadUserProfile();
 
-      // Update sidebar
-      elements.sidebarUserName.textContent = fullName;
-      updateProfilePreview();
       showToast('Profile information saved!');
     } catch (err) {
       console.error('Save error:', err);

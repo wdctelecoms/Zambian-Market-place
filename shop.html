@@ -21,6 +21,7 @@
     @media(max-width:720px){.sidebar{position:fixed;width:100%;height:auto;bottom:0;top:auto;padding:8px 9px;border-top:1px solid rgba(255,255,255,.12)}.brand,.nav-label,.sidebar-user{display:none}.nav{padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:3px}.nav a{justify-content:center;flex-direction:column;gap:2px;margin:0;padding:7px 2px;font-size:9px}.nav a span{font-size:8px}.nav a:nth-child(n+6){display:none}main{margin:0;width:100%;padding:13px 12px 85px}.topbar{padding:8px;margin-bottom:17px}.search{max-width:none}.actions .icon-btn:nth-child(2){display:none}.welcome{align-items:flex-start;flex-direction:column}.welcome h1{font-size:23px}.stats{grid-template-columns:repeat(2,1fr);gap:9px}.stat{padding:13px}.stat .value{font-size:22px}.products-grid{grid-template-columns:1fr;padding:11px}.product-image{height:210px}.layout{gap:0}.panel-head{padding:13px}.panel{margin-bottom:14px}}
     @media(max-width:390px){.stats{grid-template-columns:1fr 1fr}.product-actions button{flex:1}.topbar{gap:7px}.icon-btn{width:32px;height:32px}}
   </style>
+  <link rel="stylesheet" href="inner-pages.css">
 </head>
 <body>
 <div class="dashboard">
@@ -91,9 +92,10 @@
     const user=await hydrateAuthSessionFromSupabase().catch(()=>null);
     if(!user){return}
     if((user.role||'CUSTOMER').toUpperCase()!=='CUSTOMER'){setStatus('This account is a seller. Use the Seller dashboard to manage products.','error');}
+    const customer=user.customer||{};
     const name=user.fullName||user.full_name||user.email?.split('@')[0]||'Customer';
-    document.getElementById('userName').textContent=name;document.getElementById('userInitials').textContent=initials(name);document.getElementById('userRole').textContent=(user.role||'CUSTOMER').toLowerCase();document.getElementById('welcomeName').textContent=name.split(/\s+/)[0];document.getElementById('profileName').textContent=name;document.getElementById('profileEmail').textContent=user.email||'Email not available';document.getElementById('profilePhone').textContent=user.phone||'Phone not added';
-    try{const p=await requestJson('/customer/profile');const c=p.customer||p;document.getElementById('profilePhone').textContent=c.phone||user.phone||'Phone not added';document.getElementById('profileLocation').textContent=[c.address?.city,c.address?.province].filter(Boolean).join(', ')||'Zambia';}catch{document.getElementById('profileLocation').textContent='Zambia'}
+    document.getElementById('userName').textContent=name;document.getElementById('userInitials').textContent=initials(name);document.getElementById('userRole').textContent=(user.role||'CUSTOMER').toLowerCase();document.getElementById('welcomeName').textContent=name.split(/\s+/)[0];document.getElementById('profileName').textContent=name;document.getElementById('profileEmail').textContent=user.email||'Email not available';document.getElementById('profilePhone').textContent=customer.phone||user.phone||'Phone not added';
+    try{const p=await requestJson('/customer/profile');const c=p.customer||p;document.getElementById('profilePhone').textContent=c.phone||customer.phone||user.phone||'Phone not added';document.getElementById('profileLocation').textContent=[c.address?.city,c.address?.province].filter(Boolean).join(', ')||'Zambia';}catch{document.getElementById('profileLocation').textContent='Zambia'}
     await Promise.all([loadOrders(),loadWishlist(),loadCart(),loadMessages()]);
     setStatus('Your account is connected. Live marketplace data is ready.','success');
   }

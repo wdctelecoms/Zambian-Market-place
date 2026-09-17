@@ -1,0 +1,182 @@
+/* Shared inner-page refresh: keeps existing markup and behavior intact. */
+:root {
+  --ui-ink: #17231d;
+  --ui-muted: #68766e;
+  --ui-faint: #91a097;
+  --ui-green: #123c2a;
+  --ui-green-2: #1f6748;
+  --ui-mint: #e7f1eb;
+  --ui-clay: #b57445;
+  --ui-clay-soft: #f4e8dc;
+  --ui-bg: #f4f7f5;
+  --ui-surface: rgba(255, 255, 255, 0.94);
+  --ui-border: #dce7e0;
+  --ui-shadow: 0 12px 32px rgba(18, 60, 42, 0.07);
+  --ui-shadow-hover: 0 18px 40px rgba(18, 60, 42, 0.12);
+}
+
+body {
+  background:
+    radial-gradient(circle at 90% -10%, rgba(181, 116, 69, 0.13), transparent 28rem),
+    linear-gradient(135deg, #f8faf8 0%, var(--ui-bg) 52%, #eef5f0 100%) !important;
+  color: var(--ui-ink) !important;
+}
+
+body, input, select, textarea, button {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+h1, h2, h3, .brand strong, .brand-text, .welcome h1, .heading h1 {
+  font-family: "Source Serif 4", Georgia, serif !important;
+  letter-spacing: -0.02em;
+}
+
+.sidebar {
+  background: linear-gradient(180deg, #123c2a 0%, #0d2d20 100%) !important;
+  box-shadow: 12px 0 36px rgba(10, 42, 28, 0.1);
+}
+
+.brand, .sidebar-brand {
+  border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.logo, .logo-mark, .brand-mark, .avatar {
+  background: var(--ui-clay) !important;
+}
+
+.nav a, .nav-link {
+  border: 1px solid transparent;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.nav a:hover, .nav a.active, .nav-link:hover, .nav-link.active {
+  background: rgba(255, 255, 255, 0.11) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  transform: translateX(2px);
+}
+
+main, .main {
+  position: relative;
+}
+
+.topbar, .page-header {
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  box-shadow: 0 4px 18px rgba(18, 60, 42, 0.04) !important;
+  backdrop-filter: blur(14px);
+}
+
+.welcome, .heading {
+  animation: page-rise 420ms ease both;
+}
+
+.welcome h1, .heading h1, .page-header h1 {
+  color: var(--ui-ink) !important;
+}
+
+.welcome p, .heading p, .page-description, .status, .status-message {
+  color: var(--ui-muted) !important;
+}
+
+.card, .panel, .stat, .chat-list, .chat-thread, .checkout-card {
+  background: var(--ui-surface) !important;
+  border-color: var(--ui-border) !important;
+  box-shadow: var(--ui-shadow) !important;
+}
+
+.card, .panel, .stat, .chat-list, .chat-thread {
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.card:hover, .panel:hover, .stat:hover {
+  border-color: #c4d9cc !important;
+  box-shadow: var(--ui-shadow-hover) !important;
+}
+
+.panel-head, .card-header {
+  border-bottom-color: var(--ui-border) !important;
+}
+
+.panel-head h2, .card h2, .card-header h2 {
+  color: var(--ui-ink) !important;
+}
+
+input, select, textarea, .field input, .field select {
+  background: #fbfdfb !important;
+  border-color: var(--ui-border) !important;
+  color: var(--ui-ink) !important;
+  border-radius: 9px !important;
+}
+
+input:focus, select:focus, textarea:focus, .field input:focus, .field select:focus {
+  border-color: var(--ui-green-2) !important;
+  box-shadow: 0 0 0 4px rgba(31, 103, 72, 0.12) !important;
+}
+
+button, .btn, .place {
+  background: var(--ui-green) !important;
+  border: 1px solid var(--ui-green) !important;
+  border-radius: 9px !important;
+  box-shadow: 0 7px 16px rgba(18, 60, 42, 0.13) !important;
+  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease !important;
+}
+
+button:hover, .btn:hover, .place:hover {
+  background: var(--ui-green-2) !important;
+  box-shadow: 0 11px 22px rgba(18, 60, 42, 0.17) !important;
+  transform: translateY(-1px);
+}
+
+.button-secondary, .btn-secondary, .icon-btn {
+  background: #fff !important;
+  border: 1px solid var(--ui-border) !important;
+  color: var(--ui-green) !important;
+  box-shadow: none !important;
+}
+
+.button-secondary:hover, .btn-secondary:hover, .icon-btn:hover {
+  background: var(--ui-mint) !important;
+  border-color: #b7d1c0 !important;
+}
+
+.badge, .status-pill, .verification-badge {
+  background: var(--ui-mint) !important;
+  color: var(--ui-green-2) !important;
+}
+
+.product-card, .quick, .saved-address, .payment-option, .list-item {
+  border-color: var(--ui-border) !important;
+}
+
+.product-card:hover, .quick:hover, .saved-address:hover, .payment-option:hover, .list-item:hover {
+  border-color: #b7d1c0 !important;
+  box-shadow: 0 8px 22px rgba(18, 60, 42, 0.08) !important;
+}
+
+.price, .product-card-price, .product-card-title + .product-card-price {
+  color: var(--ui-clay) !important;
+}
+
+@keyframes page-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 720px) {
+  .sidebar {
+    box-shadow: 0 -8px 28px rgba(10, 42, 28, 0.16) !important;
+  }
+
+  main, .main {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .topbar {
+    border-radius: 12px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome, .heading { animation: none; }
+}
