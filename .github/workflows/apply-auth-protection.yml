@@ -111,10 +111,20 @@ jobs:
                   p.write_text(html, encoding='utf-8')
 
       - name: Commit changes
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app.js login.html register.html shop.html cart.html seller.html chat.html account.html checkout.html orders.html
+
+          # Only stage files that actually exist. Some optional marketplace pages
+          # (such as orders.html) may not exist in this repository yet.
+          git add -- app.js
+          for file in login.html register.html shop.html cart.html seller.html chat.html account.html checkout.html orders.html dashboard.html profile.html messages.html favorites.html notifications.html; do
+            if [ -f "$file" ]; then
+              git add -- "$file"
+            fi
+          done
+
           if git diff --cached --quiet; then
             echo "No authentication changes needed."
             exit 0
