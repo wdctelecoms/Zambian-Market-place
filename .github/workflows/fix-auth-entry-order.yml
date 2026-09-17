@@ -1,0 +1,42 @@
+name: Fix marketplace login and signup flow
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Load auth entry fix before legacy auth runtime
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for name in ('login.html','register.html'):
+              p=Path(name)
+              if not p.exists():
+                  continue
+              s=p.read_text(encoding='utf-8')
+              tag='<script src="auth-entry-fix.js"></script>'
+              if tag not in s:
+                  marker='<script src="auth-runtime.js"></script>'
+                  if marker in s:
+                      s=s.replace(marker, tag+'\n'+marker, 1)
+                  elif '</head>' in s:
+                      s=s.replace('</head>', tag+'\n</head>', 1)
+                  else:
+                      s=s.replace('</body>', tag+'\n</body>', 1)
+              p.write_text(s, encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for f in login.html register.html; do [ -f "$f" ] && git add "$f"; done
+          if ! git diff --cached --quiet; then
+            git commit -m 'Load reliable auth entry handler before runtime'
+            git push
+          fi
