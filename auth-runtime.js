@@ -38,8 +38,9 @@
     const role=(metadata.role||fallback.role||'CUSTOMER').toUpperCase()==='SELLER'?'SELLER':'CUSTOMER';
     const body={fullName,role,phone:fallback.phone||metadata.phone||authUser.phone||'',paymentMethod:fallback.paymentMethod||metadata.paymentMethod||'CARD',street:fallback.street||metadata.street||'',city:fallback.city||metadata.city||'',province:fallback.province||metadata.province||'',country:fallback.country||metadata.country||'Zambia',postalCode:fallback.postalCode||metadata.postalCode||''};
     const response=await fetch('/api/auth/sync',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify(body)});
-    if(!response.ok)throw new Error('Your account was authenticated, but the marketplace profile could not be synchronized.');
-    const payload=await response.json();return payload.user||payload;
+    const payload=await response.json().catch(()=>null);
+    if(!response.ok)throw new Error(payload?.message||'Your account was authenticated, but the marketplace profile could not be synchronized.');
+    return payload?.user||payload;
   }
   async function getMarketplaceUser(session){if(!session?.access_token)return null;try{const response=await fetch('/api/auth/me',{headers:{Authorization:`Bearer ${session.access_token}`}});if(response.ok){const payload=await response.json();return payload.user||payload}}catch{}return null}
   async function ensureMarketplaceUser(session,fallback={}){const existing=await getMarketplaceUser(session);if(existing)return existing;return await syncProfile(session,fallback)}
