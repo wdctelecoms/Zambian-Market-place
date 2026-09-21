@@ -1,0 +1,10 @@
+{
+  "name": "zambian-marketplace",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": ["server"],
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "npm run build --workspace server"
+  }
+}
