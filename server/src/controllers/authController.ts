@@ -115,8 +115,10 @@ export const sync = async (req: Request, res: Response) => {
 
     res.status(201).json({ message: "Profile created", user });
   } catch (error) {
-    console.error(error);
-    res.status(401).json({ message: "Invalid or expired token" });
+    console.error("Marketplace auth sync failed:", error);
+    const message = error instanceof Error ? error.message : "Marketplace profile synchronization failed";
+    const status = /token|authentication|jwt|unauthorized|missing email/i.test(message) ? 401 : 500;
+    res.status(status).json({ message });
   }
 };
 
