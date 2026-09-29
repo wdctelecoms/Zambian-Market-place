@@ -259,6 +259,12 @@ model Address {
   province   String
   country    String
   postalCode String
+  latitude   Float?
+  longitude  Float?
+  accuracyMeters Float?
+  landmark   String?
+  deliveryInstructions String?
+  locationSource String? @default("manual")
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
