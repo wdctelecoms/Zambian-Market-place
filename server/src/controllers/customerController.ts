@@ -148,12 +148,18 @@ export const createCustomerAddress = async (req: AuthenticatedRequest, res: Resp
     if (!userId) return;
 
     const customer = await getCustomer(userId);
-    const { street, city, province, country, postalCode, isDefault } = req.body as {
+    const { street, city, province, country, postalCode, latitude, longitude, accuracyMeters, landmark, deliveryInstructions, locationSource, isDefault } = req.body as {
       street?: string;
       city?: string;
       province?: string;
       country?: string;
       postalCode?: string;
+      latitude?: number;
+      longitude?: number;
+      accuracyMeters?: number;
+      landmark?: string;
+      deliveryInstructions?: string;
+      locationSource?: string;
       isDefault?: boolean;
     };
 
@@ -174,6 +180,12 @@ export const createCustomerAddress = async (req: AuthenticatedRequest, res: Resp
         province: province.trim(),
         country: country.trim(),
         postalCode: postalCode.trim(),
+        latitude: typeof latitude === "number" ? latitude : undefined,
+        longitude: typeof longitude === "number" ? longitude : undefined,
+        accuracyMeters: typeof accuracyMeters === "number" ? accuracyMeters : undefined,
+        landmark: landmark?.trim() || undefined,
+        deliveryInstructions: deliveryInstructions?.trim() || undefined,
+        locationSource: locationSource?.trim() || "manual",
         isDefault: Boolean(isDefault),
       },
     });
