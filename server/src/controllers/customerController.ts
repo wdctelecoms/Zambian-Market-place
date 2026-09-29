@@ -238,6 +238,12 @@ export const updateCustomerAddress = async (req: AuthenticatedRequest, res: Resp
         province: province?.trim() ?? existing.province,
         country: country?.trim() ?? existing.country,
         postalCode: postalCode?.trim() ?? existing.postalCode,
+        latitude: typeof latitude === "number" ? latitude : existing.latitude,
+        longitude: typeof longitude === "number" ? longitude : existing.longitude,
+        accuracyMeters: typeof accuracyMeters === "number" ? accuracyMeters : existing.accuracyMeters,
+        landmark: typeof landmark === "string" ? landmark.trim() || null : existing.landmark,
+        deliveryInstructions: typeof deliveryInstructions === "string" ? deliveryInstructions.trim() || null : existing.deliveryInstructions,
+        locationSource: typeof locationSource === "string" ? locationSource.trim() || "manual" : existing.locationSource,
         isDefault: typeof isDefault === "boolean" ? isDefault : existing.isDefault,
       },
     });
