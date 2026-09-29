@@ -468,6 +468,7 @@ export const getSellerOrders = async (req: AuthenticatedRequest, res: Response) 
       orderBy: { createdAt: "desc" },
       include: {
         customer: { include: { user: { select: { id: true, fullName: true, email: true } } } },
+        shippingAddress: true,
         items: { include: { product: true } },
         payment: true,
         receipt: true,
