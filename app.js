@@ -304,9 +304,25 @@ function bindLoginForm() {
       const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
-      const { user } = await requestJson("/auth/me", {
-        headers: { Authorization: `Bearer ${data.session.access_token}` },
-      });
+      let user;
+      try {
+        ({ user } = await requestJson("/auth/me", {
+          headers: { Authorization: `Bearer ${data.session.access_token}` },
+        }));
+      } catch (profileError) {
+        // A valid Supabase account may not have a marketplace profile yet.
+        // Create/sync that profile using the Supabase user's metadata.
+        ({ user } = await requestJson("/auth/sync", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${data.session.access_token}` },
+          body: JSON.stringify({
+            fullName: data.user?.user_metadata?.fullName || data.user?.user_metadata?.full_name || email.split("@")[0],
+            role: data.user?.user_metadata?.role === "SELLER" ? "SELLER" : "CUSTOMER",
+            phone: data.user?.user_metadata?.phone || "",
+            paymentMethod: data.user?.user_metadata?.paymentMethod || "CARD",
+          }),
+        }));
+      }
 
       persistAuthState(user, { accessToken: data.session.access_token });
       setStatus("form-status", "Login successful. Redirecting...", "success");
